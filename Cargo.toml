@@ -9,11 +9,19 @@ edition = "2018"
 [dependencies]
 actix-web = {version = "1.0", features = ["ssl"]}
 openssl = { version = "0.10", features = ["v110"] }
-diesel = { version = "1.0.0", features = ["postgres"] }
+chrono = { version = "0.4.6", features = ["serde"] }
+diesel = { version = "1.4.2", features = ["postgres", "uuidv07", "chrono", "r2d2"] }
 dotenv = "0.9.0"
 env_logger = "0.6"
 futures = "0.1"
-juniper = "0.13.1"
+juniper = { git = "https://github.com/graphql-rust/juniper.git"}
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
+uuid = { version = "0.7", features = ["serde", "v4"] }
+
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3

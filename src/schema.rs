@@ -1,22 +1,10 @@
 table! {
-    members (member_id) {
-        member_id -> Int4,
-        name -> Varchar,
-        knockouts -> Int4,
-        team_id -> Int4,
-    }
-}
-
-table! {
-    teams (team_id) {
-        team_id -> Int4,
+    users (user_id) {
+        user_id -> Int4,
+        user_uuid -> Uuid,
+        hash -> Nullable<Varchar>,
+        email -> Varchar,
+        created_at -> Timestamp,
         name -> Varchar,
     }
 }
-
-joinable!(members -> teams (team_id));
-
-allow_tables_to_appear_in_same_query!(
-    members,
-    teams,
-);

@@ -1,22 +1,14 @@
-CREATE TABLE teams (
-      team_id SERIAL PRIMARY KEY,
-      name VARCHAR NOT NULL
-    );
+CREATE TABLE users (
+  user_id SERIAL PRIMARY KEY,
+  user_uuid UUID NOT NULL,
+  hash VARCHAR(122),
+  email VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  name VARCHAR NOT NULL
+);
 
-    CREATE TABLE members (
-      member_id SERIAL PRIMARY KEY,
-      name VARCHAR NOT NULL,
-      knockouts INT NOT NULL DEFAULT 0,
-      team_id INT NOT NULL,
-      FOREIGN KEY (team_id) REFERENCES teams(team_id)
-    );
-
-    INSERT INTO teams(team_id, name) VALUES (1, 'Heroes');
-    INSERT INTO members(name, knockouts, team_id) VALUES ('Link', 14, 1);
-    INSERT INTO members(name, knockouts, team_id) VALUES ('Mario', 11, 1);
-    INSERT INTO members(name, knockouts, team_id) VALUES ('Kirby', 8, 1);
-
-    INSERT INTO teams(team_id, name) VALUES (2, 'Villains');
-    INSERT INTO members(name, knockouts, team_id) VALUES ('Ganondorf', 8, 2);
-    INSERT INTO members(name, knockouts, team_id) VALUES ('Bowser', 11, 2);
-    INSERT INTO members(name, knockouts, team_id) VALUES ('Mewtwo', 12, 2);
+INSERT INTO users(user_uuid, hash, email, name) VALUES (
+'7a1508e8-5e94-4743-8e3f-902fa23cc34f',
+'edb01e159a4e3f3134861207f5fc5087',
+'contact.lenne@gmail.com',
+'Julien Lenne');

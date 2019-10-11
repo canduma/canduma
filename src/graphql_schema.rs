@@ -1,97 +1,97 @@
 extern crate dotenv;
 
-use std::env;
-
-use diesel::pg::PgConnection;
+use crate::db::PgPool;
 use diesel::prelude::*;
-use dotenv::dotenv;
-use juniper::{EmptyMutation, RootNode};
+use juniper::{RootNode, FieldResult};
+use uuid::Uuid;
+use chrono::*;
+use crate::schema::users;
 
-fn establish_connection() -> PgConnection {
-    dotenv().ok();
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url).unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+#[derive(Clone)]
+pub struct Context {
+    pub db: PgPool,
 }
+
+impl juniper::Context for Context {}
 
 #[derive(Queryable)]
-struct Member {
-    id: i32,
-    name: String,
-    pub knockouts: i32,
-    pub team_id: i32,
+#[derive(juniper::GraphQLObject)]
+struct User {
+    #[allow(warnings)]
+    #[graphql(skip)]
+    user_id: i32,
+    #[warn(dead_code)]
+    #[graphql(name="uuid")]
+    user_uuid: Uuid,
+    #[allow(warnings)]
+    #[graphql(skip)]
+    hash: Option<String>,
+    #[warn(dead_code)]
+    email: String,
+    created_at: NaiveDateTime,
+    name: String
 }
 
-#[juniper::object(description = "A member of a team")]
-impl Member {
-    pub fn id(&self) -> i32 {
-        self.id
-    }
+#[derive(Insertable)]
+#[table_name="users"]
+struct NewUser {
+    user_uuid: Uuid,
+    hash: Option<String>,
+    email: String,
+    created_at: NaiveDateTime,
+    name: String,
+}
 
-    pub fn name(&self) -> &str {
-        self.name.as_str()
-    }
-
-    pub fn knockouts(&self) -> i32 {
-        self.knockouts
-    }
-
-    pub fn team_id(&self) -> i32 {
-        self.team_id
-    }
+#[derive(juniper::GraphQLInputObject)]
+struct RegisterInput {
+    email: String,
+    name: String,
+    password: String,
 }
 
 pub struct QueryRoot;
 
-
-#[juniper::object]
+#[juniper::object(Context = Context)]
 impl QueryRoot {
-    fn members() -> Vec<Member> {
-        use crate::schema::members::dsl::*;
-        let connection = establish_connection();
-        members
+    pub fn users(context: &Context) -> Vec<User> {
+        use crate::schema::users::dsl::*;
+        let connection = context.db.get()
+            .unwrap_or_else(|_| panic!("Error connecting"));
+
+        users
             .limit(100)
-            .load::<Member>(&connection)
-            .expect("Error loading members")
-    }
-    fn teams() -> Vec<Team> {
-        use crate::schema::teams::dsl::*;
-        let connection = establish_connection();
-        teams
-            .limit(10)
-            .load::<Team>(&connection)
-            .expect("Error loading teams")
-    }
-}
-
-#[derive(Queryable)]
-pub struct Team {
-    pub id: i32,
-    pub name: String,
-}
-
-#[juniper::object(description = "A team of members")]
-impl Team {
-    pub fn id(&self) -> i32 {
-        self.id
-    }
-
-    pub fn name(&self) -> &str {
-        self.name.as_str()
-    }
-
-    pub fn members(&self) -> Vec<Member> {
-        use crate::schema::members::dsl::*;
-        let connection = establish_connection();
-        members
-            .filter(team_id.eq(self.id))
-            .limit(100)
-            .load::<Member>(&connection)
+            .load::<User>(&connection)
             .expect("Error loading members")
     }
 }
 
-pub type Schema = RootNode<'static, QueryRoot, EmptyMutation<()>>;
+pub struct Mutation;
+
+#[juniper::object(Context = Context)]
+impl Mutation {
+    pub fn register(context: &Context, input: RegisterInput) -> FieldResult<User> {
+        use crate::schema::users::dsl::*;
+        let connection = context.db.get()
+            .unwrap_or_else(|_| panic!("Error connecting"));
+
+        let user = NewUser {
+            user_uuid: Uuid::new_v4(),
+            hash: Some("edb01e159a4e3f3134861207f5fc5087".to_string()),
+            created_at: Utc::now().naive_utc(),
+            email: "contact.lenne2@gmail.com".to_string(),
+            name: "Julien Lenne2".to_string(),
+        };
+
+        let inserted_user = diesel::insert_into(users)
+            .values(&user)
+            .get_result(&connection)?;
+
+        Ok(inserted_user)
+    }
+}
+
+pub type Schema = RootNode<'static, QueryRoot, Mutation>;
 
 pub fn create_schema() -> Schema {
-    Schema::new(QueryRoot {}, EmptyMutation::new())
+    Schema::new(QueryRoot {}, Mutation)
 }
