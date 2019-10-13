@@ -45,6 +45,33 @@ struct NewUser {
     name: String,
 }
 
+impl Default for NewUser {
+    fn default() -> Self {
+        Self {
+            user_uuid: Uuid::new_v4(),
+            created_at: Utc::now().naive_utc(),
+            salt: "".to_string(),
+            email: "".to_string(),
+            name: "".to_string(),
+            hash: vec![],
+        }
+    }
+}
+
+impl User {
+    fn create_user(name: &str, email: &str, password: &str) -> NewUser {
+        let salt = make_salt();
+        let hash = make_hash(&password, &salt);
+        NewUser {
+            salt: salt.to_string(),
+            hash: hash.to_vec(),
+            name: name.to_string(),
+            email: email.to_string(),
+            ..Default::default()
+        }
+    }
+}
+
 #[derive(juniper::GraphQLInputObject)]
 struct RegisterInput {
     email: String,
@@ -83,23 +110,13 @@ impl Mutation {
         let connection = context.db.get()
             .unwrap_or_else(|_| panic!("Error connecting"));
 
-        let salt_for_password = make_salt();
-        let encoded_password = make_hash(&input.password, &salt_for_password);
-
-        let mut user = NewUser {
-            user_uuid: Uuid::new_v4(),
-            salt: salt_for_password,
-            hash: encoded_password,
-            created_at: Utc::now().naive_utc(),
-            email: input.email,
-            name: input.name,
-        };
+        let new_user = User::create_user(&input.name, &input.email, &input.password);
 
         match diesel::insert_into(users)
-            .values(&user)
+            .values(&new_user)
             .get_result(&connection) {
-            Ok(user) => Ok(user),
-            Err(err) => Err(ServiceError::from(err)),
+            Ok(r) => Ok(r),
+            Err(e) => Err(e.into())
         }
     }
 
