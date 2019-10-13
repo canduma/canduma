@@ -14,7 +14,8 @@ use juniper::http::GraphQLRequest;
 mod db;
 mod graphql_schema;
 mod schema;
-
+mod utils;
+mod error;
 
 use crate::graphql_schema::{create_schema, Schema, Context};
 use crate::db::establish_connection;

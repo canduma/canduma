@@ -25,7 +25,7 @@
     <show-object-properties value="true" />
     <loaded-nodes>
       <connection connection-id="96b5446c-47aa-4084-b2db-879e7b1311c2">
-        <schema name="public" object-types="index, view, constraint, column, table, dataset trigger" />
+        <schema name="public" object-types="index, view, function, sequence, constraint, column, table, dataset trigger" />
       </connection>
     </loaded-nodes>
   </component>
@@ -43,7 +43,7 @@
     <connection id="96b5446c-47aa-4084-b2db-879e7b1311c2" />
   </component>
   <component name="DBNavigator.Project.DatasetFilterManager">
-    <filter-actions connection-id="96b5446c-47aa-4084-b2db-879e7b1311c2" dataset="public.users" active-filter-id="e621e033-69be-4daa-9add-6176b350b44b">
+    <filter-actions connection-id="96b5446c-47aa-4084-b2db-879e7b1311c2" dataset="public.users" active-filter-id="EMPTY_FILTER">
       <filter id="e621e033-69be-4daa-9add-6176b350b44b" name="Filter 1" temporary="false" custom-name="false" type="basic" join-type="AND" />
     </filter-actions>
     <filter-actions connection-id="96b5446c-47aa-4084-b2db-879e7b1311c2" dataset="public.__diesel_schema_migrations" active-filter-id="b14f98ff-c152-4164-a5cb-a5472d7b3848">
@@ -131,7 +131,7 @@
           <max-connection-pool-size value="7" />
           <alternative-statement-delimiter value="" />
         </details>
-        <object-filters hide-empty-schemas="false" hide-pseudo-columns="false">
+        <object-filters hide-empty-schemas="true" hide-pseudo-columns="true">
           <object-type-filter use-master-settings="true">
             <object-type name="SCHEMA" enabled="true" />
             <object-type name="USER" enabled="true" />

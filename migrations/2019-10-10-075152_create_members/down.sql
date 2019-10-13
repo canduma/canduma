@@ -1,2 +1,1 @@
-DROP TABLE members;
-DROP TABLE teams;
+DROP TABLE users;
