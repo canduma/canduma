@@ -1,18 +1,19 @@
 extern crate dotenv;
 
-use crate::db::PgPool;
+use crate::db::{PgPooledConnection};
 use diesel::prelude::*;
-use juniper::RootNode;
 use uuid::Uuid;
 use chrono::*;
 use crate::schema::users;
 use crate::utils::identity::{make_hash, make_salt};
-use crate::error::ServiceError;
+use crate::errors::ServiceError;
 use crate::utils::jwt::create_token;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Context {
-    pub db: PgPool,
+    pub db: Arc<PgPooledConnection>,
+    pub email: String
 }
 
 impl juniper::Context for Context {}
@@ -111,12 +112,11 @@ pub struct QueryRoot;
 impl QueryRoot {
     pub fn users(context: &Context) -> Vec<User> {
         use crate::schema::users::dsl::*;
-        let connection = context.db.get()
-            .unwrap_or_else(|_| panic!("Error connecting"));
+        let conn: &PgConnection = &context.db;
 
         users
             .limit(100)
-            .load::<User>(&connection)
+            .load::<User>(conn)
             .expect("Error loading members")
     }
 }
@@ -127,14 +127,13 @@ pub struct Mutation;
 impl Mutation {
     pub fn register(context: &Context, input: RegisterInput) -> Result<User, ServiceError> {
         use crate::schema::users::dsl::*;
-        let connection = context.db.get()
-            .unwrap_or_else(|_| panic!("Error connecting"));
+        let conn: &PgConnection = &context.db;
 
         let new_user = User::new(&input.name, &input.email, &input.password);
 
         match diesel::insert_into(users)
             .values(&new_user)
-            .get_result(&connection) {
+            .get_result(conn) {
             Ok(r) => Ok(r),
             Err(e) => Err(e.into())
         }
@@ -142,22 +141,19 @@ impl Mutation {
 
     pub fn login(context: &Context, input: LoginInput) -> Result<Token, ServiceError> {
         use crate::schema::users::dsl::*;
-        let connection = context.db.get()
-            .unwrap_or_else(|_| panic!("Error connecting"));
+        let conn: &PgConnection = &context.db;
 
         let mut items = users
             .filter(email.eq(&input.email))
-            .load::<User>(&connection)?;
+            .load::<User>(conn)?;
 
         if let Some(user) = items.pop() {
             if make_hash(&input.password, &user.salt) == user.hash {
-                match create_token(&SlimUser {
-                    email: input.email
-                }) {
+                match create_token(input.email.as_str()) {
                     Ok(r) => return Ok(Token {
-                        bearer: r
+                        bearer: context.email.to_string()
                     }),
-                    Err(e) => return Err(e)
+                    Err(e) => return Err(ServiceError::Unauthorized)
                 };
             }
         }
@@ -165,8 +161,15 @@ impl Mutation {
     }
 }
 
-pub type Schema = RootNode<'static, QueryRoot, Mutation>;
+pub type Schema = juniper::RootNode<'static, QueryRoot, Mutation>;
 
 pub fn create_schema() -> Schema {
-    Schema::new(QueryRoot {}, Mutation)
+    Schema::new(QueryRoot {}, Mutation {})
+}
+
+pub fn create_context(user_email: &str, pg_pool: PgPooledConnection) -> Context {
+    Context {
+        email: user_email.to_string(),
+        db: Arc::new(pg_pool),
+    }
 }

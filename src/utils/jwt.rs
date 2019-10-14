@@ -2,9 +2,9 @@ use crate::models::user::SlimUser;
 use std::convert::From;
 use jsonwebtoken::{decode, encode, Header, Validation} ;
 use chrono::{Local, Duration};
-use crate::error::ServiceError;
 use dotenv::dotenv;
 use std::env;
+use actix_web::HttpResponse;
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -40,16 +40,16 @@ impl From<Claims> for SlimUser {
     }
 }
 
-pub fn create_token(data: &SlimUser) -> Result<String, ServiceError> {
-    let claims = Claims::with_email(data.email.as_str());
+pub fn create_token(email: &str) -> Result<String, HttpResponse> {
+    let claims = Claims::with_email(email);
     encode(&Header::default(), &claims, get_secret().as_ref())
-        .map_err(|_err| ServiceError::InternalServerError)
+        .map_err(|e| HttpResponse::InternalServerError().json(e.to_string()))
 }
 
-pub fn decode_token(token: &str) -> Result<SlimUser, ServiceError> {
+pub fn decode_token(token: &str) -> Result<SlimUser, HttpResponse> {
     decode::<Claims>(token, get_secret().as_ref(), &Validation::default())
-        .map(|data| Ok(data.claims.into()))
-        .map_err(|_err| ServiceError::Unauthorized)?
+        .map(|data| data.claims.into())
+        .map_err(|e| HttpResponse::Unauthorized().json(e.to_string()))
 }
 
 // take a string from env variable

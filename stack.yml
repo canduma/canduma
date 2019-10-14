@@ -4,6 +4,12 @@ services:
 
   db:
     image: postgres
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=1000"
+      - "-c"
+      - "shared_buffers=3GB"
     environment:
       POSTGRES_PASSWORD: canduma
     ports:

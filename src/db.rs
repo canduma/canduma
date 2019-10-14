@@ -1,9 +1,11 @@
-use dotenv::dotenv;
 use diesel::pg::PgConnection;
-use diesel::r2d2::{ConnectionManager, Pool, PoolError};
+use diesel::r2d2::{ Pool, PooledConnection, ConnectionManager, PoolError };
 use std::env;
+use dotenv::dotenv;
+
 
 pub type PgPool = Pool<ConnectionManager<PgConnection>>;
+pub type PgPooledConnection = PooledConnection<ConnectionManager<PgConnection>>;
 
 fn init_pool(database_url: &str) -> Result<PgPool, PoolError> {
     let manager = ConnectionManager::<PgConnection>::new(database_url);
