@@ -5,6 +5,7 @@
       <w>dotenv</w>
       <w>graphiql</w>
       <w>graphql</w>
+      <w>serde</w>
     </words>
   </dictionary>
 </component>

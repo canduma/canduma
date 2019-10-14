@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 actix-web = {version = "1.0", features = ["ssl"]}
+actix-identity = "*"
 openssl = { version = "0.10", features = ["v110"] }
 chrono = { version = "0.4.6", features = ["serde"] }
 diesel = { version = "1.4.2", features = ["postgres", "uuidv07", "chrono", "r2d2"] }
@@ -22,6 +23,7 @@ uuid = { version = "0.7", features = ["serde", "v4"] }
 rand = "*"
 argon2rs = "*"
 derive_more = "*"
+jsonwebtoken = "6"
 
 [profile.dev]
 opt-level = 0

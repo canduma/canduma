@@ -1,12 +1,14 @@
 extern crate dotenv;
+
 use crate::db::PgPool;
 use diesel::prelude::*;
-use juniper::{RootNode};
+use juniper::RootNode;
 use uuid::Uuid;
 use chrono::*;
 use crate::schema::users;
-use crate::utils::{make_hash, make_salt};
+use crate::utils::identity::{make_hash, make_salt};
 use crate::error::ServiceError;
+use crate::utils::jwt::create_token;
 
 #[derive(Clone)]
 pub struct Context {
@@ -21,7 +23,7 @@ struct User {
     #[allow(warnings)]
     #[graphql(skip)]
     user_id: i32,
-    #[graphql(name="uuid")]
+    #[graphql(name = "uuid")]
     user_uuid: Uuid,
     #[allow(warnings)]
     #[graphql(skip)]
@@ -31,11 +33,25 @@ struct User {
     salt: String,
     email: String,
     created_at: NaiveDateTime,
-    name: String
+    name: String,
+}
+
+impl User {
+    fn new(name: &str, email: &str, password: &str) -> NewUser {
+        let salt = make_salt();
+        let hash = make_hash(&password, &salt);
+        NewUser {
+            salt: salt.to_string(),
+            hash: hash.to_vec(),
+            name: name.to_string(),
+            email: email.to_string(),
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Insertable)]
-#[table_name="users"]
+#[table_name = "users"]
 struct NewUser {
     user_uuid: Uuid,
     hash: Vec<u8>,
@@ -58,16 +74,20 @@ impl Default for NewUser {
     }
 }
 
-impl User {
-    fn create_user(name: &str, email: &str, password: &str) -> NewUser {
-        let salt = make_salt();
-        let hash = make_hash(&password, &salt);
-        NewUser {
-            salt: salt.to_string(),
-            hash: hash.to_vec(),
-            name: name.to_string(),
-            email: email.to_string(),
-            ..Default::default()
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SlimUser {
+    pub email: String,
+}
+
+#[derive(juniper::GraphQLObject)]
+struct Token {
+    bearer: String
+}
+
+impl From<User> for SlimUser {
+    fn from(user: User) -> Self {
+        SlimUser {
+            email: user.email
         }
     }
 }
@@ -110,7 +130,7 @@ impl Mutation {
         let connection = context.db.get()
             .unwrap_or_else(|_| panic!("Error connecting"));
 
-        let new_user = User::create_user(&input.name, &input.email, &input.password);
+        let new_user = User::new(&input.name, &input.email, &input.password);
 
         match diesel::insert_into(users)
             .values(&new_user)
@@ -120,7 +140,7 @@ impl Mutation {
         }
     }
 
-    pub fn login(context: &Context, input: LoginInput) -> Result<User, ServiceError> {
+    pub fn login(context: &Context, input: LoginInput) -> Result<Token, ServiceError> {
         use crate::schema::users::dsl::*;
         let connection = context.db.get()
             .unwrap_or_else(|_| panic!("Error connecting"));
@@ -131,7 +151,14 @@ impl Mutation {
 
         if let Some(user) = items.pop() {
             if make_hash(&input.password, &user.salt) == user.hash {
-                    return Ok(user.into());
+                match create_token(&SlimUser {
+                    email: input.email
+                }) {
+                    Ok(r) => return Ok(Token {
+                        bearer: r
+                    }),
+                    Err(e) => return Err(e)
+                };
             }
         }
         Err(ServiceError::Unauthorized)
