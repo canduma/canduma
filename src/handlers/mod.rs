@@ -19,12 +19,11 @@ impl FromRequest for LoggedUser {
                 .get("x-auth-token");
 
         match token {
-            None => return Ok(LoggedUser { email: "".to_string() }),
-            Some(token) => {
+            None => return Ok(LoggedUser { email: None }),
+            Some(token) =>  {
                 let user: SlimUser = decode_token(&token.to_str().unwrap())?;
                 return Ok(user as LoggedUser);
             }
         }
-        Ok(LoggedUser { email: "".to_string() })
     }
 }

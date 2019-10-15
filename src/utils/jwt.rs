@@ -36,7 +36,7 @@ impl Claims {
 
 impl From<Claims> for SlimUser {
     fn from(claims: Claims) -> Self {
-        SlimUser { email: claims.email }
+        SlimUser { email: Some(claims.email) }
     }
 }
 

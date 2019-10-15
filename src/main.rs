@@ -41,7 +41,7 @@ pub fn graphql(
                 serde_json::Error::custom(e)
             })?;
 
-        let ctx = create_context(&user.email, pg_pool);
+        let ctx = create_context(user.email, pg_pool);
 
         let res = data.execute(&st, &ctx);
         Ok::<_, serde_json::error::Error>(serde_json::to_string(&res)?)

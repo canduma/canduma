@@ -13,7 +13,7 @@ use std::sync::Arc;
 #[derive(Clone)]
 pub struct Context {
     pub db: Arc<PgPooledConnection>,
-    pub email: String
+    pub email: Option<String>
 }
 
 impl juniper::Context for Context {}
@@ -37,58 +37,59 @@ struct User {
     name: String,
 }
 
-impl User {
-    fn new(name: &str, email: &str, password: &str) -> NewUser {
+#[derive(Insertable)]
+#[table_name = "users"]
+struct NewUser <'a> {
+    user_uuid: Uuid,
+    hash: Option<Vec<u8>>,
+    salt: Option<String>,
+    email: Option<&'a String>,
+    created_at: NaiveDateTime,
+    name: Option<&'a String>,
+}
+
+impl <'a> NewUser <'a> {
+    fn new(name: &'a String, email: &'a String, password: &'a String) ->  NewUser <'a> {
         let salt = make_salt();
         let hash = make_hash(&password, &salt);
         NewUser {
-            salt: salt.to_string(),
-            hash: hash.to_vec(),
-            name: name.to_string(),
-            email: email.to_string(),
+            salt: Some(salt),
+            hash: Some(hash.to_vec()),
+            name: Some(&name),
+            email: Some(&email),
             ..Default::default()
         }
     }
 }
 
-#[derive(Insertable)]
-#[table_name = "users"]
-struct NewUser {
-    user_uuid: Uuid,
-    hash: Vec<u8>,
-    salt: String,
-    email: String,
-    created_at: NaiveDateTime,
-    name: String,
-}
-
-impl Default for NewUser {
+impl <'a> Default for NewUser <'a> {
     fn default() -> Self {
         Self {
             user_uuid: Uuid::new_v4(),
             created_at: Utc::now().naive_utc(),
-            salt: "".to_string(),
-            email: "".to_string(),
-            name: "".to_string(),
-            hash: vec![],
+            salt: None,
+            email: None,
+            name: None,
+            hash: None,
         }
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SlimUser {
-    pub email: String,
+    pub email: Option<String>,
 }
 
 #[derive(juniper::GraphQLObject)]
 struct Token {
-    bearer: String
+    bearer: Option<String>,
+    user: User
 }
 
 impl From<User> for SlimUser {
     fn from(user: User) -> Self {
         SlimUser {
-            email: user.email
+            email: Some(user.email)
         }
     }
 }
@@ -129,7 +130,7 @@ impl Mutation {
         use crate::schema::users::dsl::*;
         let conn: &PgConnection = &context.db;
 
-        let new_user = User::new(&input.name, &input.email, &input.password);
+        let new_user = NewUser::new(&input.name, &input.email, &input.password);
 
         match diesel::insert_into(users)
             .values(&new_user)
@@ -151,7 +152,8 @@ impl Mutation {
             if make_hash(&input.password, &user.salt) == user.hash {
                 match create_token(input.email.as_str()) {
                     Ok(r) => return Ok(Token {
-                        bearer: context.email.to_string()
+                        bearer: Some(r),
+                        user
                     }),
                     Err(e) => return Err(ServiceError::Unauthorized)
                 };
@@ -167,9 +169,9 @@ pub fn create_schema() -> Schema {
     Schema::new(QueryRoot {}, Mutation {})
 }
 
-pub fn create_context(user_email: &str, pg_pool: PgPooledConnection) -> Context {
+pub fn create_context(user_email: Option<String>, pg_pool: PgPooledConnection) -> Context {
     Context {
-        email: user_email.to_string(),
+        email: user_email,
         db: Arc::new(pg_pool),
     }
 }
