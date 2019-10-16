@@ -25,6 +25,7 @@ rand = "*"
 argon2rs = "*"
 derive_more = "*"
 jsonwebtoken = "6"
+actix-web-httpauth = "0.3.2"
 
 [profile.dev]
 opt-level = 0

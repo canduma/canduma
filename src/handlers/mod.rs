@@ -1,28 +1,30 @@
 use actix_web::{FromRequest, HttpResponse, HttpRequest, dev};
 use crate::utils::jwt::decode_token;
 use crate::models::user::SlimUser;
+use actix_web_httpauth::extractors::bearer::BearerAuth;
 
 pub type LoggedUser = SlimUser;
 
-
-/// Extract a new `LoggedUser` from Request.
-/// todo: Verify expiration of token and info and handle error into ServiceError
 impl FromRequest for LoggedUser {
     type Error = HttpResponse;
     type Future = Result<Self, HttpResponse>;
     type Config = ();
 
     fn from_request(req: &HttpRequest, _payload: &mut dev::Payload) -> Self::Future {
-        let token =
-            req
-                .headers()
-                .get("x-auth-token");
 
+        let token = match BearerAuth::extract(req) {
+            Ok(t) => Some(t.token().to_string()),
+            Err(_) => None
+        };
+
+        // TODO: Send a Result<LoggedUser, ServiceError> to Context
         match token {
             None => return Ok(LoggedUser { email: None }),
-            Some(token) =>  {
-                let user: SlimUser = decode_token(&token.to_str().unwrap())?;
-                return Ok(user as LoggedUser);
+            Some(token) => {
+                match decode_token(&token) {
+                    Ok(decoded) => Ok(decoded as LoggedUser),
+                    Err(_) => return Ok(LoggedUser { email: None }),
+                }
             }
         }
     }

@@ -1,6 +1,6 @@
 extern crate dotenv;
 
-use crate::db::{PgPooledConnection};
+use crate::db::PgPooledConnection;
 use diesel::prelude::*;
 use uuid::Uuid;
 use chrono::*;
@@ -12,12 +12,26 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Context {
+    /// Context with postgres pool and user email is logged
+    /// Email come from extractor in `Handlers/extractor.rs`.
+    /// And inject in `main.rs` by the signature `user: LoggedUser`.
+    /// # Examples
+    /// `pub fn graphql(
+    ///    ...
+    ///    user: LoggedUser,
+    ///    pool: web::Data<PgPool>
+    ///) -> impl Future<Item = HttpResponse, Error = Error> {
+    ///    web::block(move || {
+    ///
+    ///        let pg_pool = pool
+    ///        let ctx = create_context(user.email, pg_pool);`
     pub db: Arc<PgPooledConnection>,
-    pub email: Option<String>
+    pub email: Option<String>,
 }
 
 impl juniper::Context for Context {}
 
+/// Full user use by GraphQl and DB
 #[derive(Queryable)]
 #[derive(juniper::GraphQLObject)]
 struct User {
@@ -37,9 +51,10 @@ struct User {
     name: String,
 }
 
+/// New user use by DB for insertion
 #[derive(Insertable)]
 #[table_name = "users"]
-struct NewUser <'a> {
+struct NewUser<'a> {
     user_uuid: Uuid,
     hash: Option<Vec<u8>>,
     salt: Option<String>,
@@ -48,21 +63,9 @@ struct NewUser <'a> {
     name: Option<&'a String>,
 }
 
-impl <'a> NewUser <'a> {
-    fn new(name: &'a String, email: &'a String, password: &'a String) ->  NewUser <'a> {
-        let salt = make_salt();
-        let hash = make_hash(&password, &salt);
-        NewUser {
-            salt: Some(salt),
-            hash: Some(hash.to_vec()),
-            name: Some(&name),
-            email: Some(&email),
-            ..Default::default()
-        }
-    }
-}
-
-impl <'a> Default for NewUser <'a> {
+/// Default values for a new user.
+/// Like a constructor ...
+impl<'a> Default for NewUser<'a> {
     fn default() -> Self {
         Self {
             user_uuid: Uuid::new_v4(),
@@ -75,15 +78,25 @@ impl <'a> Default for NewUser <'a> {
     }
 }
 
+/// Setters for new user
+impl<'a> NewUser<'a> {
+    fn new(name: &'a String, email: &'a String, password: &'a String) -> NewUser<'a> {
+        let salt = make_salt();
+        let hash = make_hash(&password, &salt);
+        NewUser {
+            salt: Some(salt),
+            hash: Some(hash.to_vec()),
+            name: Some(&name),
+            email: Some(&email),
+            ..Default::default()
+        }
+    }
+}
+
+/// Use by JWT to encode/decode the token
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SlimUser {
     pub email: Option<String>,
-}
-
-#[derive(juniper::GraphQLObject)]
-struct Token {
-    bearer: Option<String>,
-    user: User
 }
 
 impl From<User> for SlimUser {
@@ -92,6 +105,13 @@ impl From<User> for SlimUser {
             email: Some(user.email)
         }
     }
+}
+
+/// decrypted token JWT and return into login
+#[derive(juniper::GraphQLObject)]
+struct Token {
+    bearer: Option<String>,
+    user: User,
 }
 
 #[derive(juniper::GraphQLInputObject)]
@@ -111,14 +131,20 @@ pub struct QueryRoot;
 
 #[juniper::object(Context = Context)]
 impl QueryRoot {
-    pub fn users(context: &Context) -> Vec<User> {
-        use crate::schema::users::dsl::*;
-        let conn: &PgConnection = &context.db;
+    pub fn users(context: &Context) -> Result<Vec<User>, ServiceError> {
 
-        users
-            .limit(100)
-            .load::<User>(conn)
-            .expect("Error loading members")
+    use crate::schema::users::dsl::*;
+    let conn: & PgConnection = & context.db;
+
+    if context.email.is_none() {
+        return Err(ServiceError::Unauthorized
+        ) };
+
+    let u = users
+    .limit(100)
+        .load::<User>(conn).expect("");
+
+    Ok(u)
     }
 }
 
@@ -153,7 +179,7 @@ impl Mutation {
                 match create_token(input.email.as_str()) {
                     Ok(r) => return Ok(Token {
                         bearer: Some(r),
-                        user
+                        user,
                     }),
                     Err(e) => return Err(ServiceError::Unauthorized)
                 };
