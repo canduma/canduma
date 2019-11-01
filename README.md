@@ -28,7 +28,7 @@ Your own pull requests are welcome!
 * Diesel cli with postgres `cargo install diesel_cli --no-default-features --features "postgres"`
 * PostgreSQL database server or use our docker-compose.yml (require docker)
 
-## Getting Started with Docker PostgreSQL
+## Getting Started
 ```sh
 git clone https://github.com/clifinger/canduma.git
 cd canduma
