@@ -68,6 +68,50 @@ cargo run
 ### Test authentication with JWT by getting all users
 ![Set Token with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/insomnia-test-jwt-by-get-members.png?raw=true)
 
+### Raw code for Insomnia
+```text
+############ GraphQL Queries ############
+mutation MemberRegister($registerInput: RegisterInput!) {
+  register(input: $registerInput) {
+    name
+    email
+    uuid
+  }
+}
+mutation MemberLogin($loginInput: LoginInput!) {
+  login(input: $loginInput) {
+    bearer
+    user {
+      name
+      uuid
+      createdAt
+      email
+    }
+  }
+}
+query MembersQuery {
+  users {
+    createdAt
+    name
+    email
+    uuid
+  }
+}
+
+############ Query Variables ############
+{
+	"registerInput": {
+		"email": "me@me.me",
+		"name": "John Doe",
+		"password": "canduma"
+	},
+	"loginInput": {
+		"email": "me@me.me",
+		"password": "canduma"
+	}
+}
+```
+
 ## Build release
 ```sh 
 cargo build --release
