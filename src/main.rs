@@ -54,13 +54,6 @@ pub fn graphql(
         })
 }
 
-fn graphiql() -> HttpResponse {
-    let html = graphiql_source("https://canduma.rust.localhost:8088/graphql");
-    HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(html)
-}
-
 fn main() {
     let sys = actix::System::new("canduma");
     let mut builder = SslAcceptor::mozilla_intermediate(
@@ -77,6 +70,10 @@ fn main() {
     builder.set_certificate_chain_file("certs/rust.localhost.crt").unwrap();
 
     dotenv().ok();
+    let port = env::var("PORT")
+        .unwrap_or_else(|_| "3000".to_string())
+        .parse()
+        .expect("PORT must be a number");
     HttpServer::new(move || {
         App::new()
             .data(establish_connection())
@@ -86,9 +83,8 @@ fn main() {
             .service(
                 web::resource("/graphql").route(web::post().to_async(graphql))
             )
-            .service(
-                web::resource("/graphiql").route(web::get().to(graphiql))
-            )
-    }).bind_ssl("127.0.0.1:8088", builder).unwrap().start();
+    })
+        //.bind_ssl("127.0.0.1:8088", builder).unwrap().start();
+        .bind(("0.0.0.0", port)).unwrap().start();
     let _ = sys.run();
 }
