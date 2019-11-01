@@ -1,4 +1,22 @@
-# Rust web server with GraphQL API, Diesel Postgres and JWT authentication
+# Canduma rust server boilerplate
+`A Rust web server with GraphQL API, Diesel, PostgreSQL and JWT authentication.`
+
+This repository contains boilerplate rust code for getting a GraphQL prototype with JWT up and running quickly.
+ 
+It uses [actix-web](https://actix.rs/), [Juniper](https://graphql-rust.github.io/juniper/current/), 
+[Diesel](http://diesel.rs/) and [jsonwebtoken](https://docs.rs/jsonwebtoken)
+
+Your own pull requests are welcome!
+
+## Collection of major crates used in Canduma
+* actix - [link](https://actix.rs/)
+* actix-web - [link](https://docs.rs/actix-web/)
+* diesel - [link](http://diesel.rs/)
+* juniper - [link](https://graphql-rust.github.io/juniper/current/)
+* chrono - [link](https://docs.rs/chrono/)
+* serde_json - [link](https://docs.serde.rs/serde_json/)
+* argon2rs - [link](https://github.com/bryant/argon2rs)
+* jsonwebtoken - [link](https://docs.rs/jsonwebtoken)
 
 ## Required
 * [Rustup](https://rustup.rs/)
