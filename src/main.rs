@@ -9,7 +9,6 @@ extern crate serde_derive;
 
 use std::sync::Arc;
 use actix_web::{web, Error, App, HttpResponse, HttpServer, middleware};
-use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use crate::serde::ser::Error as SerdeError;
 
 use futures::future::Future;
@@ -57,18 +56,7 @@ pub fn graphql(
 
 fn main() {
     let sys = actix::System::new("canduma");
-    let mut builder = SslAcceptor::mozilla_intermediate(
-        SslMethod::tls()
-    ).unwrap();
-
     let schema = std::sync::Arc::new(create_schema());
-    /*let pool = establish_connection();
-    let schema_context = Context { db: pool.clone(), user: "hello".to_string() };*/
-
-    builder
-        .set_private_key_file("certs/rust.localhost.key", SslFiletype::PEM)
-        .unwrap();
-    builder.set_certificate_chain_file("certs/rust.localhost.crt").unwrap();
 
     dotenv().ok();
     let port = env::var("PORT")
@@ -85,7 +73,6 @@ fn main() {
                 web::resource("/graphql").route(web::post().to_async(graphql))
             )
     })
-        //.bind_ssl("127.0.0.1:8088", builder).unwrap().start();
         .bind(("0.0.0.0", port)).unwrap().start();
     let _ = sys.run();
 }

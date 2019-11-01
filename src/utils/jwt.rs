@@ -24,8 +24,9 @@ struct Claims {
 // struct to get converted to token and back
 impl Claims {
     fn with_email(email: &str) -> Self {
+        dotenv().ok();
         Claims {
-            iss: "localhost".into(),
+            iss: env::var("DOMAIN").unwrap_or("localhost".into()),
             sub: "auth".into(),
             email: email.to_owned(),
             iat: Local::now().timestamp(),
