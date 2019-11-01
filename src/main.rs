@@ -27,6 +27,7 @@ mod errors;
 use crate::models::user::{create_schema, Schema, create_context};
 use crate::db::{establish_connection, PgPool};
 use crate::handlers::LoggedUser;
+use std::env;
 
 pub fn graphql(
     st: web::Data<Arc<Schema>>,
