@@ -1,3 +1,7 @@
+[![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
+[![Status](https://img.shields.io/badge/build-passing-brightgreen)]()
+[![Status](https://img.shields.io/badge/pull--request-open-blue)]()
+
 # Canduma rust server boilerplate
 `A Rust web server with GraphQL API, Diesel, PostgreSQL and JWT authentication.`
 
