@@ -12,6 +12,23 @@ It uses [actix-web](https://actix.rs/), [Juniper](https://graphql-rust.github.io
 
 Your own pull requests are welcome!
 
+## Benchmarks with insert into PostgreSQL
+```shell script
+▶ ./bombardier -c 125 -n 10000000 http://localhost:3000/graphql -k -f body --method=POST -H "Content-Type: application/json" -s    
+Bombarding http://localhost:3000/graphql with 10000000 request(s) using 125 connection(s)
+
+10000000 / 10000000 [===========================================================================] 100.00% 28777/s 5m47s
+Done!
+Statistics        Avg      Stdev        Max
+  Reqs/sec     28788.66    2183.47   34605.95
+  Latency        4.32ms   543.07us   110.95ms
+  HTTP codes:
+    1xx - 0, 2xx - 10000000, 3xx - 0, 4xx - 0, 5xx - 0
+    others - 0
+  Throughput:    20.75MB/s
+```
+
+
 ## Collection of major crates used in Canduma
 * actix - [link](https://actix.rs/)
 * actix-web - [link](https://docs.rs/actix-web/)
@@ -51,3 +68,9 @@ cargo run
 ### Test authentication with JWT by getting all users
 ![Set Token with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/insomnia-test-jwt-by-get-members.png?raw=true)
 
+## Build release
+```sh 
+cargo build --release
+cd target/release
+./canduma
+```
