@@ -2,8 +2,8 @@
 [![Status](https://img.shields.io/badge/build-passing-brightgreen)]()
 [![Status](https://img.shields.io/badge/pull--request-open-blue)]()
 
-# Canduma rust server boilerplate
-`A Rust web server with GraphQL API, Diesel, PostgreSQL and JWT authentication.`
+# Canduma rust authentication server boilerplate
+`A Rust authentication server with GraphQL API, Diesel, PostgreSQL and JWT authentication.`
 
 This repository contains boilerplate rust code for getting a GraphQL prototype with JWT up and running quickly.
  
@@ -117,4 +117,30 @@ query MembersQuery {
 cargo build --release
 cd target/release
 ./canduma
+```
+
+## Security
+### Important security considerations
+The use of JWT remains secure only if you use adequate storage. 
+
+This boilerplate is built for use in a micro-services architecture. 
+
+The private key should only be on this authentication micro-service and the 
+public key can be used on all other micro-services to decode the token.
+
+It also means that this micro-service must be open only to trusted developers.
+
+This boilerplate provides a complete but not perfect example.
+The endpoints: register and users should be placed on other micro-services 
+by using the public key to keep only the login and the return of the token on this authentication server .
+
+### Generate RSA keys for JWT
+```shell script
+// private key
+$ openssl genrsa -out rs256-4096-private.rsa 4096
+$ openssl rsa -in rs256-4096-private.rsa -outform DER -out private_rsa_key.der
+
+// public key
+$ openssl rsa -in rs256-4096-private.rsa -pubout > rs256-4096-public.pem
+$ openssl rsa -in private_rsa_key.der -inform DER -RSAPublicKey_out -outform DER -out public_rsa_key.der
 ```

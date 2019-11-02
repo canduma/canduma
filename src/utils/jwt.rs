@@ -1,9 +1,9 @@
 use crate::models::user::SlimUser;
 use std::convert::From;
-use jsonwebtoken::{decode, encode, Header, Validation} ;
+use jsonwebtoken::{decode, encode, Header, Validation, Algorithm};
 use chrono::{Local, Duration};
 use dotenv::dotenv;
-use std::env;
+use std::{env, fs};
 use actix_web::HttpResponse;
 
 
@@ -43,18 +43,21 @@ impl From<Claims> for SlimUser {
 
 pub fn create_token(email: &str) -> Result<String, HttpResponse> {
     let claims = Claims::with_email(email);
-    encode(&Header::default(), &claims, get_secret().as_ref())
+    encode(&Header::new(Algorithm::RS256), &claims, include_bytes!("../../keys/private_rsa_key.der"))
         .map_err(|e| HttpResponse::InternalServerError().json(e.to_string()))
 }
 
 pub fn decode_token(token: &str) -> Result<SlimUser, HttpResponse> {
-    decode::<Claims>(token, get_secret().as_ref(), &Validation::default())
+    decode::<Claims>(token, include_bytes!("../../keys/public_rsa_key.der"), &Validation::new(Algorithm::RS256))
         .map(|data| data.claims.into())
         .map_err(|e| HttpResponse::Unauthorized().json(e.to_string()))
 }
 
+/*
 // take a string from env variable
 fn get_secret() -> String {
-    dotenv().ok();
-    env::var("SECRET").unwrap_or("my secret".into())
-}
+    //dotenv().ok();
+    //env::var("SECRET").unwrap_or("my secret".into())
+    fs::read_to_string("./keys/private.der")
+        .expect("Something went wrong reading the file")
+}*/
