@@ -41,7 +41,7 @@ Statistics        Avg      Stdev        Max
 
 ## Required
 * [Rustup](https://rustup.rs/)
-* Nightly Toolchain: `rustup default nightly`
+* Nightly Toolchain: `rustup default nightly` (stable work also)
 * Diesel cli with postgres `cargo install diesel_cli --no-default-features --features "postgres"`
 * PostgreSQL database server or use our docker-compose.yml (require docker)
 
