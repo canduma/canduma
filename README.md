@@ -135,6 +135,8 @@ The endpoints: register and users should be placed on other micro-services
 by using the public key to keep only the login and the return of the token on this authentication server .
 
 ### Generate RSA keys for JWT
+In development mode you can keep the one in `/keys` folder.
+
 ```shell script
 // private key
 $ openssl genrsa -out rs256-4096-private.rsa 4096
