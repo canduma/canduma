@@ -1,6 +1,5 @@
-extern crate rand;
-
 use argon2rs::argon2i_simple;
+use crate::errors::ServiceError;
 
 pub fn make_salt() -> String {
     use rand::Rng;
@@ -21,4 +20,15 @@ pub fn make_salt() -> String {
 
 pub fn make_hash(password: &str, salt: &str) -> Vec<u8> {
     argon2i_simple(password, salt).to_vec()
+}
+
+pub fn verify(hash: &Vec<u8>, salt: &str, password: &str) -> Result<bool, ServiceError> {
+    if &make_hash(password, salt) == hash {
+        return Ok(true);
+    }
+    Err(ServiceError::Unauthorized)
+}
+
+lazy_static::lazy_static! {
+pub  static ref SECRET_KEY: String = std::env::var("SECRET_KEY").unwrap_or_else(|_| "0123".repeat(8));
 }

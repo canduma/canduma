@@ -1,77 +1,53 @@
 #[macro_use]
 extern crate diesel;
 extern crate juniper;
-extern crate serde;
-extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde;
 
-
-use std::sync::Arc;
-use actix_web::{web, Error, App, HttpResponse, HttpServer, middleware};
-use crate::serde::ser::Error as SerdeError;
-
-use futures::future::Future;
-use juniper::http::graphiql::graphiql_source;
-use juniper::http::GraphQLRequest;
-use dotenv::dotenv;
-
-mod handlers;
-mod db;
-mod models;
-mod schema;
-mod utils;
+mod database;
+mod user;
 mod errors;
+mod schema;
+mod graphql;
+mod jwt;
 
-use crate::models::user::{create_schema, Schema, create_context};
-use crate::db::{establish_connection, PgPool};
-use crate::handlers::LoggedUser;
+use database::pool::establish_connection;
 use std::env;
+use dotenv::dotenv;
+use actix_web::{HttpServer, App, middleware};
+use actix_identity::{CookieIdentityPolicy, IdentityService};
+use user::route::route_user;
+use crate::graphql::route::route_graphql;
+use crate::graphql::manager::create_schema;
 
-pub fn graphql(
-    st: web::Data<Arc<Schema>>,
-    data: web::Json<GraphQLRequest>,
-    user: LoggedUser,
-    pool: web::Data<PgPool>
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    web::block(move || {
-        let pg_pool = pool
-            .get()
-            .map_err(|e| {
-                serde_json::Error::custom(e)
-            })?;
-
-        let ctx = create_context(user.email, pg_pool);
-
-        let res = data.execute(&st, &ctx);
-        Ok::<_, serde_json::error::Error>(serde_json::to_string(&res)?)
-    })
-        .map_err(Error::from)
-        .and_then(|user| {
-            Ok(HttpResponse::Ok()
-                .content_type("application/json")
-                .body(user))
-        })
-}
 
 fn main() {
+    dotenv().ok();
     let sys = actix::System::new("canduma");
     let schema = std::sync::Arc::new(create_schema());
-
-    dotenv().ok();
     let port = env::var("PORT")
         .unwrap_or_else(|_| "3000".to_string())
         .parse()
         .expect("PORT must be a number");
+
+    let domain: String = std::env::var("DOMAIN").unwrap_or_else(|_| "localhost".to_string());
+
     HttpServer::new(move || {
         App::new()
             .data(establish_connection())
             .data(schema.clone())
-            //.data(schema_context.clone())
+            .wrap(IdentityService::new(
+                CookieIdentityPolicy::new(user::util::SECRET_KEY.as_bytes())
+                    .name("auth")
+                    .path("/")
+                    .domain(domain.as_str())
+                    .max_age_time(chrono::Duration::days(1))
+                    .secure(false), // this can only be true if you have https
+            ))
             .wrap(middleware::Compress::default())
-            .service(
-                web::resource("/graphql").route(web::post().to_async(graphql))
-            )
+            .configure(route_user)
+            .configure(route_graphql)
     })
         .bind(("0.0.0.0", port)).unwrap().start();
     let _ = sys.run();
