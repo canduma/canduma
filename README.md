@@ -3,7 +3,7 @@
 [![Status](https://img.shields.io/badge/pull--request-open-blue)]()
 
 # Canduma rust authentication server boilerplate
-`A Rust authentication server with GraphQL API, Diesel, PostgreSQL and JWT authentication.`
+`A Rust authentication server with GraphQL API, Diesel, PostgreSQL session authentication and JWT`
 
 This repository contains boilerplate rust code for getting a GraphQL prototype with JWT up and running quickly.
  
@@ -41,7 +41,7 @@ Statistics        Avg      Stdev        Max
 
 ## Required
 * [Rustup](https://rustup.rs/)
-* Nightly Toolchain: `rustup default nightly` (stable work also)
+* Stable Toolchain: `rustup default stable`
 * Diesel cli with postgres `cargo install diesel_cli --no-default-features --features "postgres"`
 * PostgreSQL database server or use our docker-compose.yml (require docker)
 
@@ -57,59 +57,58 @@ cargo run
 ```
 ## Test the GraphQL API with Insomnia
 ### Register
-![Register with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/insomnia-register.png?raw=true)
+![Register with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-register.png?raw=true)
 
 ### Login
-![Login with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/insomnia-login.png?raw=true)
+![Login with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-login.png?raw=true)
+
+### Get my account
+![Login with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-get-me.png?raw=true)
+
+### Get JWT Token
+![Get JWT by GraphQL with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-grahql-get-jwt.png?raw=true)
 
 ### Set Bearer JWT Token
 ![Set JWT Token with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/insomnia-set-bearer.png?raw=true)
 
-### Test authentication with JWT by getting all users
-![Set Token with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/insomnia-test-jwt-by-get-members.png?raw=true)
+### Get decoded JWT by the server (for tests purpose)
+![Get JWT decoded Token by GraphQL with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-grahql-get-jwt-decoded.png?raw=true)
+
+### Test authentication with session in GraphQL by getting all users (for tests purpose)
+![Get all users by GraphQL with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-grahql-get-users.png?raw=true)
+
+### Logout
+![Logout with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-logout.png?raw=true)
+
 
 ### Raw code for Insomnia
 ```text
 ############ GraphQL Queries ############
-mutation MemberRegister($registerInput: RegisterInput!) {
-  register(input: $registerInput) {
-    name
-    email
-    uuid
-  }
-}
-mutation MemberLogin($loginInput: LoginInput!) {
-  login(input: $loginInput) {
-    bearer
-    user {
-      name
-      uuid
-      createdAt
-      email
-    }
-  }
-}
-query MembersQuery {
+query usersQuery {
   users {
-    createdAt
     name
+    userUuid
     email
-    uuid
+    createdAt
   }
 }
 
-############ Query Variables ############
-{
-	"registerInput": {
-		"email": "me@me.me",
-		"name": "John Doe",
-		"password": "canduma"
-	},
-	"loginInput": {
-		"email": "me@me.me",
-		"password": "canduma"
-	}
+query tokenQuery {
+  token {
+    bearer
+  }
 }
+
+query decodeTokenQuery {
+  decode {
+    email
+    iss
+    iat
+    exp
+    sub
+  }
+}
+
 ```
 
 ## Build release
@@ -121,18 +120,22 @@ cd target/release
 
 ## Security
 ### Important security considerations
-The use of JWT remains secure only if you use adequate storage. 
 
+We use session cookies for authentication.
+
+__Why not JWT authentication?__
+
+[Stop Using JWT for sessions and why your solution doesn't work](http://cryto.net/~joepie91/blog/2016/06/19/stop-using-jwt-for-sessions-part-2-why-your-solution-doesnt-work/)
+
+The use of JWT remains secure only if you use adequate storage. 
 This boilerplate is built for use in a micro-services architecture. 
 
-The private key should only be on this authentication micro-service and the 
-public key can be used on all other micro-services to decode the token.
+JWT can be use for representing claims to be transferred between two parties.
 
-It also means that this micro-service must be open only to trusted developers.
+The private key should only be on this  micro-service.
+public key can be used on all other parties to decode the token.
 
-This boilerplate provides a complete but not perfect example.
-The endpoints: register and users should be placed on other micro-services 
-by using the public key to keep only the login and the return of the token on this authentication server .
+This boilerplate provides a complete example, so we included JWT also.
 
 ### Generate RSA keys for JWT
 In development mode you can keep the one in `/keys` folder.

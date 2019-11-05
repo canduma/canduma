@@ -1,5 +1,5 @@
 use diesel::pg::PgConnection;
-use diesel::r2d2::{ Pool, PooledConnection, ConnectionManager, PoolError };
+use diesel::r2d2::{ Pool, ConnectionManager, PoolError, PooledConnection };
 use std::env;
 use dotenv::dotenv;
 
