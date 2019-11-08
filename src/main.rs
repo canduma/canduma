@@ -6,21 +6,20 @@ extern crate serde_derive;
 extern crate serde;
 
 mod database;
-mod user;
 mod errors;
-mod schema;
 mod graphql;
 mod jwt;
+mod schema;
+mod user;
 
-use database::pool::establish_connection;
-use std::env;
-use dotenv::dotenv;
-use actix_web::{HttpServer, App, middleware};
-use actix_identity::{CookieIdentityPolicy, IdentityService};
-use user::route::route_user;
-use crate::graphql::route::route_graphql;
 use crate::graphql::manager::create_schema;
-
+use crate::graphql::route::route_graphql;
+use actix_identity::{CookieIdentityPolicy, IdentityService};
+use actix_web::{middleware, App, HttpServer};
+use database::pool::establish_connection;
+use dotenv::dotenv;
+use std::env;
+use user::route::route_user;
 
 fn main() {
     dotenv().ok();
@@ -49,6 +48,8 @@ fn main() {
             .configure(route_user)
             .configure(route_graphql)
     })
-        .bind(("0.0.0.0", port)).unwrap().start();
+    .bind(("0.0.0.0", port))
+    .unwrap()
+    .start();
     let _ = sys.run();
 }

@@ -1,3 +1,3 @@
-pub mod model;
-pub mod manager;
 pub mod handler;
+pub mod manager;
+pub mod model;

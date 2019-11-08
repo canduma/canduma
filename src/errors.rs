@@ -1,9 +1,9 @@
 use actix_web::{error::ResponseError, HttpResponse};
 use derive_more::Display;
 use diesel::result::{DatabaseErrorKind, Error as DBError};
+use juniper::graphql_value;
 use std::convert::From;
 use uuid::parser::ParseError;
-use juniper::graphql_value;
 
 #[derive(Debug, Display, Serialize)]
 pub enum ServiceError {

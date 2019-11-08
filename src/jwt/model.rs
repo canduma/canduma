@@ -1,13 +1,13 @@
-use std::convert::From;
-use chrono::{Local, Duration, NaiveDateTime};
-use dotenv::dotenv;
-use std::{env};
 use crate::user::model::SlimUser;
 use chrono::format::StrftimeItems;
+use chrono::{Duration, Local, NaiveDateTime};
+use dotenv::dotenv;
+use std::convert::From;
+use std::env;
 
 #[derive(Clone)]
 pub struct DecodedToken {
-    pub jwt: Option<Claims>
+    pub jwt: Option<Claims>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -66,11 +66,13 @@ impl Claims {
 
 #[derive(juniper::GraphQLObject)]
 pub struct Token {
-    pub bearer: Option<String>
+    pub bearer: Option<String>,
 }
 
 impl From<Claims> for SlimUser {
     fn from(claims: Claims) -> Self {
-        SlimUser { email: Some(claims.email) }
+        SlimUser {
+            email: Some(claims.email),
+        }
     }
 }

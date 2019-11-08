@@ -1,8 +1,8 @@
-use uuid::Uuid;
 use crate::schema::*;
 use chrono::*;
+use uuid::Uuid;
 extern crate rand;
-use crate::user::util::{make_salt, make_hash};
+use crate::user::util::{make_hash, make_salt};
 
 #[derive(Debug, Serialize, Deserialize, Queryable, juniper::GraphQLObject)]
 pub struct User {
@@ -48,7 +48,11 @@ pub struct AuthData {
 pub type LoggedUser = SlimUser;
 
 impl User {
-    pub fn new<S: Into<String>, T: Into<String>, N: Into<String>>(email: S, pwd: T, name: N) -> UserInsert {
+    pub fn new<S: Into<String>, T: Into<String>, N: Into<String>>(
+        email: S,
+        pwd: T,
+        name: N,
+    ) -> UserInsert {
         let salt = make_salt();
         let hash = make_hash(&pwd.into(), &salt);
         UserInsert {
@@ -57,13 +61,15 @@ impl User {
             hash,
             created_at: chrono::Local::now().naive_local(),
             salt,
-            name: name.into()
+            name: name.into(),
         }
     }
 }
 
 impl From<User> for SlimUser {
     fn from(user: User) -> Self {
-        SlimUser { email: Option::from(user.email) }
+        SlimUser {
+            email: Option::from(user.email),
+        }
     }
 }
