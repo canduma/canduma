@@ -1,5 +1,5 @@
-use argon2rs::argon2i_simple;
 use crate::errors::ServiceError;
+use argon2rs::argon2i_simple;
 
 pub fn make_salt() -> String {
     use rand::Rng;

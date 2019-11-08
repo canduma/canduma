@@ -1,12 +1,12 @@
-use actix_web::{HttpResponse, web, FromRequest, Error, HttpRequest};
-use actix_web::error::BlockingError;
 use crate::database::pool::PgPool;
-use futures::Future;
 use crate::errors::ServiceError;
-use crate::user::model::{UserData, SlimUser, AuthData, LoggedUser};
-use crate::user::manager::{user_manager_register, user_manager_login};
+use crate::user::manager::{user_manager_login, user_manager_register};
+use crate::user::model::{AuthData, LoggedUser, SlimUser, UserData};
 use actix_identity::Identity;
 use actix_web::dev::Payload;
+use actix_web::error::BlockingError;
+use actix_web::{web, Error, FromRequest, HttpRequest, HttpResponse};
+use futures::Future;
 
 impl FromRequest for LoggedUser {
     type Error = Error;
@@ -14,13 +14,12 @@ impl FromRequest for LoggedUser {
     type Config = ();
 
     fn from_request(req: &HttpRequest, pl: &mut Payload) -> Self::Future {
-
         if let Some(identity) = Identity::from_request(req, pl)?.identity() {
             let user: LoggedUser = serde_json::from_str(&identity)?;
             return Ok(user);
         }
 
-        Ok(LoggedUser {email: None})
+        Ok(LoggedUser { email: None })
     }
 }
 
@@ -28,19 +27,13 @@ pub fn user_handler_register(
     user_data: web::Json<UserData>,
     pool: web::Data<PgPool>,
 ) -> impl Future<Item = HttpResponse, Error = ServiceError> {
-    web::block(move || {
-        user_manager_register(
-            user_data.into_inner(),
-            pool,
-        )
+    web::block(move || user_manager_register(user_data.into_inner(), pool)).then(|res| match res {
+        Ok(user) => Ok(HttpResponse::Ok().json(&user)),
+        Err(err) => match err {
+            BlockingError::Error(service_error) => Err(service_error),
+            BlockingError::Canceled => Err(ServiceError::InternalServerError),
+        },
     })
-        .then(|res| match res {
-            Ok(user) => Ok(HttpResponse::Ok().json(&user)),
-            Err(err) => match err {
-                BlockingError::Error(service_error) => Err(service_error),
-                BlockingError::Canceled => Err(ServiceError::InternalServerError),
-            },
-        })
 }
 
 pub fn user_handler_login(

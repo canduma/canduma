@@ -1,8 +1,8 @@
-use crate::user::model::{SlimUser};
-use crate::graphql::model::{Schema, QueryRoot, Mutation, Context};
-use std::sync::Arc;
 use crate::database::pool::PgPooledConnection;
+use crate::graphql::model::{Context, Mutation, QueryRoot, Schema};
 use crate::jwt::model::DecodedToken;
+use crate::user::model::SlimUser;
+use std::sync::Arc;
 
 pub fn create_schema() -> Schema {
     Schema::new(QueryRoot {}, Mutation {})
