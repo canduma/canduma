@@ -3,3 +3,6 @@
 
 [print_schema]
 file = "src/schema.rs"
+with_docs = true
+import_types = ["diesel::sql_types::*"]
+patch_file = "src/schema.patch"
