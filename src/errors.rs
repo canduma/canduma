@@ -1,20 +1,22 @@
 use actix_web::{error::ResponseError, HttpResponse};
-use derive_more::Display;
 use diesel::result::{DatabaseErrorKind, Error as DBError};
 use juniper::graphql_value;
 use std::convert::From;
-use uuid::parser::ParseError;
+use thiserror::Error;
 
-#[derive(Debug, Display, Serialize)]
+#[derive(Debug, Error, Serialize)]
 pub enum ServiceError {
-    #[display(fmt = "Internal Server Error")]
+    #[error("Internal Server Error")]
     InternalServerError,
 
-    #[display(fmt = "BadRequest: {}", _0)]
+    #[error("BadRequest: {0}")]
     BadRequest(String),
 
-    #[display(fmt = "Unauthorized")]
+    #[error("Unauthorized")]
     Unauthorized,
+
+    #[error("Unable to connect to DB")]
+    UnableToConnectToDb,
 }
 
 impl juniper::IntoFieldError for ServiceError {
@@ -44,6 +46,8 @@ impl ResponseError for ServiceError {
             ServiceError::InternalServerError => {
                 HttpResponse::InternalServerError().json("Internal Server Error, Please try later")
             }
+            ServiceError::UnableToConnectToDb => HttpResponse::InternalServerError()
+                .json("Unable to connect to DB, Please try later"),
             ServiceError::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
             ServiceError::Unauthorized => HttpResponse::Unauthorized().json("Unauthorized"),
         }
@@ -52,8 +56,8 @@ impl ResponseError for ServiceError {
 
 // we can return early in our handlers if UUID provided by the user is not valid
 // and provide a custom message
-impl From<ParseError> for ServiceError {
-    fn from(_: ParseError) -> ServiceError {
+impl From<uuid::parser::ParseError> for ServiceError {
+    fn from(_: uuid::parser::ParseError) -> ServiceError {
         ServiceError::BadRequest("Invalid UUID".into())
     }
 }
@@ -74,3 +78,5 @@ impl From<DBError> for ServiceError {
         }
     }
 }
+
+pub type ServiceResult<V> = std::result::Result<V, crate::errors::ServiceError>;

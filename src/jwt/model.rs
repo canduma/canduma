@@ -1,9 +1,8 @@
 use crate::user::model::SlimUser;
-use chrono::format::StrftimeItems;
-use chrono::{Duration, Local, NaiveDateTime};
-use dotenv::dotenv;
-use std::convert::From;
-use std::env;
+use anyhow::Result;
+use chrono::{Duration, Local};
+use std::convert::TryFrom;
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct DecodedToken {
@@ -16,50 +15,36 @@ pub struct Claims {
     pub iss: String,
     // subject
     pub sub: String,
-    //issued at
+    // issued at
     pub iat: i64,
     // expiry
     pub exp: i64,
     // user email
     pub email: String,
+    // user role
+    pub role: String,
 }
 
-pub type HumanClaims = Claims;
-
-#[juniper::object]
-impl HumanClaims {
-    fn iss(&self) -> &str {
-        self.iss.as_str()
-    }
-    fn email(&self) -> &str {
-        self.email.as_str()
-    }
-    fn sub(&self) -> &str {
-        self.sub.as_str()
-    }
-    fn iat(&self) -> String {
-        let fmt = StrftimeItems::new("%Y-%m-%d %H:%M:%S");
-        NaiveDateTime::from_timestamp(*&self.iat, 0)
-            .format_with_items(fmt.clone())
-            .to_string()
-    }
-    fn exp(&self) -> String {
-        let fmt = StrftimeItems::new("%Y-%m-%d %H:%M:%S");
-        NaiveDateTime::from_timestamp(*&self.exp, 0)
-            .format_with_items(fmt.clone())
-            .to_string()
-    }
-}
 // struct to get converted to token and back
 impl Claims {
-    pub fn with_email(email: &str) -> Self {
-        dotenv().ok();
+    pub(crate) fn new(slim_user: &SlimUser, issuer: String, auth_duration_in_hour: u16) -> Self {
+        let SlimUser {
+            email,
+            user_uuid,
+            role,
+            ..
+        } = slim_user;
+
+        let iat = Local::now();
+        let exp = iat + Duration::hours(i64::from(auth_duration_in_hour));
+
         Claims {
-            iss: env::var("DOMAIN").unwrap_or("localhost".into()),
-            sub: "auth".into(),
-            email: email.to_owned(),
-            iat: Local::now().timestamp(),
-            exp: (Local::now() + Duration::hours(24)).timestamp(),
+            iss: issuer,
+            sub: user_uuid.to_string(),
+            email: email.clone(),
+            role: role.clone(),
+            iat: iat.timestamp(),
+            exp: exp.timestamp(),
         }
     }
 }
@@ -69,10 +54,18 @@ pub struct Token {
     pub bearer: Option<String>,
 }
 
-impl From<Claims> for SlimUser {
-    fn from(claims: Claims) -> Self {
-        SlimUser {
-            email: Some(claims.email),
-        }
+impl TryFrom<Claims> for SlimUser {
+    type Error = anyhow::Error;
+
+    fn try_from(claims: Claims) -> Result<Self> {
+        let Claims {
+            email, sub, role, ..
+        } = claims;
+
+        Ok(SlimUser {
+            email,
+            user_uuid: Uuid::parse_str(&sub)?,
+            role,
+        })
     }
 }
