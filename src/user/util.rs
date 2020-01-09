@@ -1,3 +1,4 @@
+use super::model::{LoggedUser, User};
 use crate::errors::ServiceError;
 use argon2rs::argon2i_simple;
 
@@ -18,17 +19,19 @@ pub fn make_salt() -> String {
     password
 }
 
-pub fn make_hash(password: &str, salt: &str) -> Vec<u8> {
-    argon2i_simple(password, salt).to_vec()
+pub fn make_hash(password: &str, salt: &str) -> [u8; argon2rs::defaults::LENGTH] {
+    argon2i_simple(password, salt)
 }
 
-pub fn verify(hash: &Vec<u8>, salt: &str, password: &str) -> Result<bool, ServiceError> {
-    if &make_hash(password, salt) == hash {
-        return Ok(true);
+pub fn verify(user: &User, password: &str) -> bool {
+    let User { hash, salt, .. } = user;
+
+    make_hash(password, salt) == hash.as_ref()
+}
+
+pub fn has_role(user: &LoggedUser, role: &str) -> Result<bool, ServiceError> {
+    match user.0 {
+        Some(ref user) if user.role == role => Ok(true),
+        _ => Err(ServiceError::Unauthorized),
     }
-    Err(ServiceError::Unauthorized)
-}
-
-lazy_static::lazy_static! {
-pub  static ref SECRET_KEY: String = std::env::var("SECRET_KEY").unwrap_or_else(|_| "0123".repeat(8));
 }

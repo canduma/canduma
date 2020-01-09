@@ -1,21 +1,15 @@
 version: '3.1'
 
 services:
-
-  db:
-    image: postgres
+  pg:
+    image: postgres:12-alpine
     command:
-      - "postgres"
-      - "-c"
-      - "max_connections=1000"
-      - "-c"
-      - "shared_buffers=3GB"
+      - 'postgres'
+      - '-c'
+      - 'max_connections=100'
+      - '-c'
+      - 'shared_buffers=256MB'
     environment:
       POSTGRES_PASSWORD: canduma
     ports:
       - 5432:5432
-
-  adminer:
-    image: adminer
-    ports:
-      - 8080:8080

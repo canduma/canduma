@@ -1,0 +1,78 @@
+###
+# @name graphqli
+GET http://canduma.localhost.tv:3000/graphiql
+
+
+###
+# @name register
+POST http://canduma.localhost.tv:3000/user/register HTTP/1.1
+Content-Type: application/json
+
+{
+    "name": "my name",
+    "email": "email2@nowhere.com",
+    "password": "password"
+}
+
+###
+# @name login
+POST http://canduma.localhost.tv:3000/user/login HTTP/1.1
+Content-Type: application/json
+
+{
+    "email": "email2@nowhere.com",
+    "password": "password"
+}
+
+###
+# @name getMyAccount
+GET http://canduma.localhost.tv:3000/user/me HTTP/1.1
+
+
+###
+# @name getJwtToken
+POST http://canduma.localhost.tv:3000/graphql HTTP/1.1
+Content-Type: application/json
+X-REQUEST-TYPE: GraphQL
+
+query tokenQuery {
+    generateToken {
+        bearer
+    }
+}
+
+###
+# @name decodeJwtToken
+
+@jwtToken = {{getJwtToken.response.body.$.data.generateToken.bearer}}
+
+POST http://canduma.localhost.tv:3000/graphql HTTP/1.1
+Authorization: Bearer {{jwtToken}}
+Content-Type: application/json
+X-REQUEST-TYPE: GraphQL
+
+query decodeTokenQuery {
+    decodeToken {
+        email
+        iss
+        iat
+        exp
+        sub
+    }
+}
+
+###
+# @name listUsers
+POST http://canduma.localhost.tv:3000/graphql HTTP/1.1
+Authorization: Bearer {{jwtToken}}
+Content-Type: application/json
+X-REQUEST-TYPE: GraphQL
+
+query ListUsers {
+    users {
+        name
+        userUuid
+        email
+        createdAt
+    }
+}

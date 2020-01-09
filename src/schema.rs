@@ -5,7 +5,8 @@ table! {
         hash -> Bytea,
         salt -> Varchar,
         email -> Varchar,
-        created_at -> Timestamp,
+        role -> Varchar,
         name -> Varchar,
+        created_at -> Timestamp,
     }
 }

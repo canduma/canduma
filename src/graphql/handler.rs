@@ -1,34 +1,37 @@
-use crate::database::pool::PgPool;
-use crate::graphql::manager::create_context;
-use crate::graphql::model::Schema;
-use actix_web::{web, Error, HttpResponse};
-use futures::Future;
+use crate::cli_args::Opt;
+use crate::database::{db_connection, Pool};
+use crate::graphql::model::{Context, Schema};
+use crate::jwt::model::DecodedToken;
+use crate::user::model::LoggedUser;
+use actix_web::{error, web, Error, HttpResponse};
+use juniper::http::graphiql::graphiql_source;
 use juniper::http::GraphQLRequest;
 use std::sync::Arc;
-extern crate serde_json;
-use crate::jwt::model::DecodedToken;
-use crate::serde::ser::Error as SerdeError;
-use crate::user::model::LoggedUser;
 
-pub fn graphql_handler(
+pub(super) async fn graphql(
     st: web::Data<Arc<Schema>>,
     data: web::Json<GraphQLRequest>,
     user: LoggedUser,
     token: DecodedToken,
-    pool: web::Data<PgPool>,
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    web::block(move || {
-        let pg_pool = pool.get().map_err(|e| serde_json::Error::custom(e))?;
+    pool: web::Data<Pool>,
+    opt: web::Data<Opt>,
+) -> Result<HttpResponse, Error> {
+    let db_pool = db_connection(&pool)?;
 
-        let ctx = create_context(token, user, pg_pool);
+    let opt = opt.into_inner().as_ref().clone();
+    let ctx = Context::new(token, user, db_pool, opt);
 
-        let res = data.execute(&st, &ctx);
-        Ok::<_, serde_json::error::Error>(serde_json::to_string(&res)?)
-    })
-    .map_err(Error::from)
-    .and_then(|user| {
-        Ok(HttpResponse::Ok()
-            .content_type("application/json")
-            .body(user))
-    })
+    let res = data.execute(&st, &ctx);
+    let json = serde_json::to_string(&res).map_err(error::ErrorInternalServerError)?;
+
+    Ok(HttpResponse::Ok()
+        .content_type("application/json")
+        .body(json))
+}
+
+pub(super) fn graphiql(opt: web::Data<Opt>) -> HttpResponse {
+    let html = graphiql_source(&format!("http://127.0.0.1:{}/graphql", opt.port));
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(html)
 }

@@ -1,69 +1,66 @@
-use crate::database::pool::PgPool;
+use crate::database::Pool;
 use crate::errors::ServiceError;
-use crate::user::manager::{user_manager_login, user_manager_register};
-use crate::user::model::{AuthData, LoggedUser, SlimUser, UserData};
-use actix_identity::Identity;
+use crate::user::model::{LoggedUser, SlimUser, UserData};
+use crate::user::service as user;
+use actix_identity::{Identity, RequestIdentity};
 use actix_web::dev::Payload;
-use actix_web::error::BlockingError;
 use actix_web::{web, Error, FromRequest, HttpRequest, HttpResponse};
-use futures::Future;
 
 impl FromRequest for LoggedUser {
     type Error = Error;
-    type Future = Result<LoggedUser, Error>;
+    type Future = futures::future::Ready<Result<Self, Self::Error>>;
     type Config = ();
 
-    fn from_request(req: &HttpRequest, pl: &mut Payload) -> Self::Future {
-        if let Some(identity) = Identity::from_request(req, pl)?.identity() {
-            let user: LoggedUser = serde_json::from_str(&identity)?;
-            return Ok(user);
-        }
+    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
+        let identity = req.get_identity();
 
-        Ok(LoggedUser { email: None })
+        let slim_user = if let Some(identity) = identity {
+            match serde_json::from_str::<SlimUser>(&identity) {
+                Err(e) => return futures::future::err(e.into()),
+                Ok(y) => Ok(Some(y)),
+            }
+        } else {
+            Ok(None)
+        };
+
+        futures::future::ready(slim_user.map(LoggedUser))
     }
 }
 
-pub fn user_handler_register(
+pub async fn register(
     user_data: web::Json<UserData>,
-    pool: web::Data<PgPool>,
-) -> impl Future<Item = HttpResponse, Error = ServiceError> {
-    web::block(move || user_manager_register(user_data.into_inner(), pool)).then(|res| match res {
-        Ok(user) => Ok(HttpResponse::Ok().json(&user)),
-        Err(err) => match err {
-            BlockingError::Error(service_error) => Err(service_error),
-            BlockingError::Canceled => Err(ServiceError::InternalServerError),
-        },
+    pool: web::Data<Pool>,
+) -> Result<HttpResponse, ServiceError> {
+    user::register(user_data.into_inner(), pool).map(|res| HttpResponse::Ok().json(&res))
+}
+
+#[derive(Debug, Deserialize)]
+pub(super) struct LoginQuery {
+    pub email: String,
+    pub password: String,
+}
+
+pub(super) async fn login(
+    auth_data: web::Json<LoginQuery>,
+    id: Identity,
+    pool: web::Data<Pool>,
+) -> Result<HttpResponse, ServiceError> {
+    user::login(&auth_data.email, &auth_data.password, pool).and_then(|res| {
+        let user_string =
+            serde_json::to_string(&res).map_err(|_| ServiceError::InternalServerError)?;
+        id.remember(user_string);
+        Ok(HttpResponse::Ok().finish())
     })
 }
 
-pub fn user_handler_login(
-    auth_data: web::Json<AuthData>,
-    id: Identity,
-    pool: web::Data<PgPool>,
-) -> impl Future<Item = HttpResponse, Error = ServiceError> {
-    web::block(move || user_manager_login(auth_data.into_inner(), pool)).then(
-        move |res: Result<SlimUser, BlockingError<ServiceError>>| match res {
-            Ok(user) => {
-                let user_string = serde_json::to_string(&user).unwrap();
-                id.remember(user_string);
-                Ok(HttpResponse::Ok().finish())
-            }
-            Err(err) => match err {
-                BlockingError::Error(service_error) => Err(service_error),
-                BlockingError::Canceled => Err(ServiceError::InternalServerError),
-            },
-        },
-    )
-}
-
-pub fn user_handler_me(logged_user: LoggedUser) -> HttpResponse {
-    if logged_user.email == None {
-        return HttpResponse::Unauthorized().json(ServiceError::Unauthorized);
+pub fn me(logged_user: LoggedUser) -> HttpResponse {
+    match logged_user.0 {
+        None => HttpResponse::Unauthorized().json(ServiceError::Unauthorized),
+        Some(user) => HttpResponse::Ok().json(user),
     }
-    HttpResponse::Ok().json(logged_user)
 }
 
-pub fn user_handler_logout(id: Identity) -> HttpResponse {
+pub fn logout(id: Identity) -> HttpResponse {
     id.forget();
     HttpResponse::Ok().finish()
 }

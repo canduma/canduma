@@ -1,10 +1,9 @@
 #[macro_use]
 extern crate diesel;
-extern crate juniper;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde;
 
+mod cli_args;
 mod database;
 mod errors;
 mod graphql;
@@ -12,44 +11,46 @@ mod jwt;
 mod schema;
 mod user;
 
-use crate::graphql::manager::create_schema;
-use crate::graphql::route::route_graphql;
 use actix_identity::{CookieIdentityPolicy, IdentityService};
-use actix_web::{middleware, App, HttpServer};
-use database::pool::establish_connection;
-use dotenv::dotenv;
-use std::env;
-use user::route::route_user;
+use actix_web::{App, HttpServer};
 
-fn main() {
-    dotenv().ok();
-    let sys = actix::System::new("canduma");
-    let schema = std::sync::Arc::new(create_schema());
-    let port = env::var("PORT")
-        .unwrap_or_else(|_| "3000".to_string())
-        .parse()
-        .expect("PORT must be a number");
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
+    dotenv::dotenv().ok();
 
-    let domain: String = std::env::var("DOMAIN").unwrap_or_else(|_| "localhost".to_string());
+    let opt = {
+        use structopt::StructOpt;
+        cli_args::Opt::from_args()
+    };
 
-    HttpServer::new(move || {
+    let schema = std::sync::Arc::new(crate::graphql::model::create_schema());
+    let domain = opt.domain.clone();
+    let cookie_secret_key = opt.auth_secret_key.clone();
+    let secure_cookie = opt.secure_cookie;
+    let auth_duration = chrono::Duration::hours(i64::from(opt.auth_duration_in_hour));
+    let port = opt.port;
+
+    let server = HttpServer::new(move || {
         App::new()
-            .data(establish_connection())
+            .data(database::pool::establish_connection(opt.clone()))
             .data(schema.clone())
+            .data(opt.clone())
             .wrap(IdentityService::new(
-                CookieIdentityPolicy::new(user::util::SECRET_KEY.as_bytes())
+                CookieIdentityPolicy::new(cookie_secret_key.as_bytes())
                     .name("auth")
                     .path("/")
-                    .domain(domain.as_str())
-                    .max_age_time(chrono::Duration::days(1))
-                    .secure(false), // this can only be true if you have https
+                    .domain(&domain)
+                    .max_age_time(auth_duration)
+                    .secure(secure_cookie),
             ))
-            .wrap(middleware::Compress::default())
-            .configure(route_user)
-            .configure(route_graphql)
+            .configure(user::route)
+            .configure(graphql::route)
     })
     .bind(("0.0.0.0", port))
     .unwrap()
-    .start();
-    let _ = sys.run();
+    .run();
+
+    eprintln!("Listening on 0.0.0.0:{}", port);
+
+    server.await
 }
