@@ -438,7 +438,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "canduma-async"
+name = "canduma"
 version = "0.2.0"
 dependencies = [
  "actix-identity 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",

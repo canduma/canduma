@@ -1,5 +1,5 @@
 [package]
-name = "canduma-async"
+name = "canduma"
 version = "0.2.0"
 authors = [
     "Julien Lenne <contact.lenne@gmail.com>",
@@ -38,7 +38,6 @@ thiserror = "1.0"
 num = "0.2"
 shrinkwraprs = "0.2"
 
-#spectral = "0.6"
 structopt = "0.3"
 
 regex = "1"
