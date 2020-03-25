@@ -12,7 +12,7 @@ dotenv = "0.15"
 
 actix-web = {version = "2.0", features = []}
 actix-rt = "1.0"
-actix-identity = "0.2"
+actix-identity = "0.2.1"
 futures = "0.3"
 
 diesel = { version = "1.4", features = ["postgres", "uuidv07", "chrono", "r2d2"] }
