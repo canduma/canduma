@@ -76,3 +76,10 @@ query ListUsers {
         createdAt
     }
 }
+
+
+###
+# @name logout
+GET http://canduma.localhost.tv:3000/user/logout HTTP/1.1
+
+###
