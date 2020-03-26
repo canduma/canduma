@@ -12,7 +12,7 @@ mod schema;
 mod user;
 
 use actix_identity::{CookieIdentityPolicy, IdentityService};
-use actix_web::{App, HttpServer};
+use actix_web::{App, HttpServer, web};
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -29,10 +29,11 @@ async fn main() -> std::io::Result<()> {
     let secure_cookie = opt.secure_cookie;
     let auth_duration = chrono::Duration::hours(i64::from(opt.auth_duration_in_hour));
     let port = opt.port;
+    let pool = web::Data::new(database::pool::establish_connection(opt.clone()));
 
     let server = HttpServer::new(move || {
         App::new()
-            .data(database::pool::establish_connection(opt.clone()))
+            .app_data(pool.clone())
             .data(schema.clone())
             .data(opt.clone())
             .wrap(IdentityService::new(
