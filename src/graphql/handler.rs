@@ -4,7 +4,7 @@ use crate::graphql::model::{Context, Schema};
 use crate::jwt::model::DecodedToken;
 use crate::user::model::LoggedUser;
 use actix_web::{error, web, Error, HttpResponse};
-use juniper::http::graphiql::graphiql_source;
+use juniper::http::playground::playground_source;
 use juniper::http::GraphQLRequest;
 use std::sync::Arc;
 
@@ -29,8 +29,8 @@ pub(super) async fn graphql(
         .body(json))
 }
 
-pub(super) fn graphiql(opt: web::Data<Opt>) -> HttpResponse {
-    let html = graphiql_source(&format!("http://127.0.0.1:{}/graphql", opt.port));
+pub(super) fn playground(opt: web::Data<Opt>) -> HttpResponse {
+    let html = playground_source(&format!("http://{}:{}/graphql", opt.domain, opt.port));
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
         .body(html)
