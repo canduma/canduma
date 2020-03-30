@@ -1,5 +1,5 @@
 use actix_web::{error::ResponseError, HttpResponse};
-use diesel::result::{DatabaseErrorKind, Error as DBError};
+use diesel::result::{Error as DBError};
 use juniper::graphql_value;
 use std::convert::From;
 use thiserror::Error;
@@ -28,11 +28,22 @@ impl juniper::IntoFieldError for ServiceError {
                     "type": "NO_ACCESS"
                 }),
             ),
-
-            _ => juniper::FieldError::new(
-                "Unknown Error",
+            ServiceError::BadRequest(s) => juniper::FieldError::new(
+                s,
                 graphql_value!({
-                    "type": "UNKNOWN_ERROR"
+                    "type": "BAD_REQUEST"
+                }),
+            ),
+            ServiceError::InternalServerError => juniper::FieldError::new(
+                "Internal Error",
+                graphql_value!({
+                    "type": "INTERNAL_ERROR"
+                }),
+            ),
+            ServiceError::UnableToConnectToDb => juniper::FieldError::new(
+                "Unable to connect to DB",
+                graphql_value!({
+                    "type": "DB_CONNECTION_ERROR"
                 }),
             ),
         }
@@ -67,12 +78,9 @@ impl From<DBError> for ServiceError {
         // Right now we just care about UniqueViolation from diesel
         // But this would be helpful to easily map errors as our app grows
         match error {
-            DBError::DatabaseError(kind, info) => {
-                if let DatabaseErrorKind::UniqueViolation = kind {
-                    let message = info.details().unwrap_or_else(|| info.message()).to_string();
-                    return ServiceError::BadRequest(message);
-                }
-                ServiceError::InternalServerError
+            DBError::DatabaseError(_kind, info) => {
+                let message = info.details().unwrap_or_else(|| info.message()).to_string();
+                return ServiceError::BadRequest(message);
             }
             _ => ServiceError::InternalServerError,
         }
