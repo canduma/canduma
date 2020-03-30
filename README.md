@@ -173,3 +173,9 @@ $ openssl genrsa -out rs256-4096-private.rsa 4096
 // public key
 $ openssl rsa -in rs256-4096-private.rsa -pubout > rs256-4096-public.pem
 ```
+
+### Logging
+
+Logging controlled by middleware::Logger [actix.rs](https://actix.rs/docs/errors/)
+
+To enable debug logging set `RUST_LOG=debug` in `.env`
