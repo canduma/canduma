@@ -13,6 +13,7 @@ mod user;
 
 use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{App, HttpServer, web};
+use actix_web::middleware::Logger;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -36,6 +37,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(pool.clone())
             .data(schema.clone())
             .data(opt.clone())
+            .wrap(Logger::default())
             .wrap(IdentityService::new(
                 CookieIdentityPolicy::new(cookie_secret_key.as_bytes())
                     .name("auth")
