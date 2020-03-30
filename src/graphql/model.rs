@@ -33,14 +33,14 @@ pub(crate) struct QueryRoot;
 
 #[juniper::object(Context = Context)]
 impl QueryRoot {
-    pub fn users(context: &Context, limit: Option<i32>) -> ServiceResult<Vec<User>> {
-        use num::cast::ToPrimitive;
+    pub fn users(context: &Context, limit: Option<i32>, offset: Option<i32>) -> ServiceResult<Vec<User>> {
 
-        let limit: usize = limit.and_then(|v| v.to_usize()).unwrap_or(100);
+        let limit: i32 = limit.unwrap_or(100);
+        let offset: i32 = offset.unwrap_or(0);
 
         crate::user::has_role(&context.user, "user")?;
 
-        user::list::find_all_users(&context, limit)
+        user::list::find_all_users(&context, limit, offset)
     }
 
     pub fn generate_token(context: &Context) -> ServiceResult<Token> {

@@ -1,6 +1,6 @@
 ###
 # @name graphqli
-GET http://canduma.localhost.tv:3000/graphiql
+GET http://canduma.localhost.tv:3000/
 
 
 ###
@@ -76,6 +76,24 @@ query ListUsers {
         createdAt
     }
 }
+
+###
+# @name listUsers
+# @return "message": "LIMIT must not be negative"
+POST http://canduma.localhost.tv:3000/graphql HTTP/1.1
+Authorization: Bearer {{jwtToken}}
+Content-Type: application/json
+X-REQUEST-TYPE: GraphQL
+
+query ListUsers {
+  users(limit: -1, offset: 1) {
+  name
+  userUuid
+  email
+  createdAt
+}
+}
+
 
 
 ###
