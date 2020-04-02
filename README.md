@@ -67,35 +67,35 @@ cargo run
 
 ### Register
 
-![Register with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-register.png?raw=true)
+![Register with Insomnia](docs/images/new-insomnia-register.png)
 
 ### Login
 
-![Login with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-login.png?raw=true)
+![Login with Insomnia](docs/images/new-insomnia-login.png)
 
 ### Get my account
 
-![Login with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-get-me.png?raw=true)
+![Login with Insomnia](docs/images/new-insomnia-get-me.png)
 
 ### Get JWT Token
 
-![Get JWT by GraphQL with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-grahql-get-jwt.png?raw=true)
+![Get JWT by GraphQL with Insomnia](docs/images/new-insomnia-grahql-get-jwt.png)
 
 ### Set Bearer JWT Token
 
-![Set JWT Token with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/insomnia-set-bearer.png?raw=true)
+![Set JWT Token with Insomnia](docs/images/insomnia-set-bearer.png)
 
 ### Get decoded JWT by the server (for tests purpose)
 
-![Get JWT decoded Token by GraphQL with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-grahql-get-jwt-decoded.png?raw=true)
+![Get JWT decoded Token by GraphQL with Insomnia](docs/images/new-insomnia-grahql-get-jwt-decoded.png)
 
 ### Test authentication with session in GraphQL by getting all users (for tests purpose)
 
-![Get all users by GraphQL with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-grahql-get-users.png?raw=true)
+![Get all users by GraphQL with Insomnia](docs/images/new-insomnia-grahql-get-users.png)
 
 ### Logout
 
-![Logout with Insomnia](https://github.com/clifinger/canduma/blob/master/docs/images/new-insomnia-logout.png?raw=true)
+![Logout with Insomnia](docs/images/new-insomnia-logout.png)
 
 ### Raw code for Insomnia
 
