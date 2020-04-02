@@ -1,5 +1,5 @@
 use actix_web::{error::ResponseError, HttpResponse};
-use diesel::result::{Error as DBError};
+use diesel::result::Error as DBError;
 use juniper::graphql_value;
 use std::convert::From;
 use thiserror::Error;
@@ -80,7 +80,7 @@ impl From<DBError> for ServiceError {
         match error {
             DBError::DatabaseError(_kind, info) => {
                 let message = info.details().unwrap_or_else(|| info.message()).to_string();
-                return ServiceError::BadRequest(message);
+                ServiceError::BadRequest(message)
             }
             _ => ServiceError::InternalServerError,
         }

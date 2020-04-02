@@ -179,3 +179,57 @@ $ openssl rsa -in rs256-4096-private.rsa -pubout > rs256-4096-public.pem
 Logging controlled by middleware::Logger [actix.rs](https://actix.rs/docs/errors/)
 
 To enable debug logging set `RUST_LOG=debug` in `.env`
+
+### Testing
+
+#### Initialization
+
+First run `yarn` or `npm install` to get all required packages
+
+#### npm run test
+
+To run you can use `npm run test` or `yarn test`.
+
+The testing system designed to automatically build `canduma` offline and start in `tests/jest.beforeall.js`
+We starting `canduma` in order to capture output from both rust and js code using `testci` target
+
+#### npm run testci
+
+```bash
+$ npm run testci
+
+> canduma@ testci /home/olexiyb/b100pro/canduma
+> cross-env RUST_LOG=debug DEBUG=canduma:* NODE_ENV=test jest
+
+Determining test suites to run...
+$ killall canduma
+canduma: no process found
+
+$ cargo build
+    Finished dev [unoptimized + debuginfo] target(s) in 0.07s
+  canduma:jest.beforeall.js build = { status: 0, signal: null, output: [ null, null, null ], pid: 2447, stdout: null, stderr: null } +0ms
+
+$  target/debug/canduma
+[2020-04-02T18:17:19Z INFO  actix_server::builder] Starting 24 workers
+[2020-04-02T18:17:19Z INFO  actix_server::builder] Starting server on 0.0.0.0:4000
+Listening on 0.0.0.0:4000
+started API 
+
+  canduma:user.test.js /user/me body='Unauthorized' text="Unauthorized" +0ms
+
+...
+[2020-04-02T18:17:22Z DEBUG canduma::user::handler] user_string={"user_uuid":"f7cfa71e-096e-44d0-ae4f-7d16dd9e4baf","email":"email1@nowhere.com","role":"bad_role"}
+  canduma:user.test.js /graphql body={ data: null, errors: [ { message: 'Unauthorized', locations: [Array], path: [Array], extensions: [Object] } ] } +292ms
+ PASS  tests/user.test.js
+ 
+...
+```
+
+In example above you see output from jest tests as well as from rust code `debug!("user_string={}", user_string);`
+
+#### CLion
+
+I also highly recommend to use CLion as a dev tool.
+I allows to run all tests or individual with single click and analyze logs
+
+![alt text](docs/images/clion-1.png)
