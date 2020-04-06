@@ -30,14 +30,14 @@ pub struct InsertableUser {
     pub role: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, juniper::GraphQLInputObject)]
 pub struct UserData {
     pub name: String,
     pub email: String,
     pub password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, juniper::GraphQLObject)]
 pub struct SlimUser {
     pub user_uuid: Uuid,
     pub email: String,

@@ -1,4 +1,14 @@
 /target
 **/*.rs.bk
-/.idea/
-.env
+.idea/
+node_modules/
+python_modules/
+
+# ---> Node
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json

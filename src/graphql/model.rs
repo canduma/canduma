@@ -2,9 +2,10 @@ use crate::cli_args::Opt;
 use crate::database::PooledConnection;
 use crate::errors::ServiceResult;
 use crate::jwt::model::{DecodedToken, Token};
-use crate::user::model::{LoggedUser, User};
+use crate::user::model::{LoggedUser, SlimUser, User, UserData};
 use crate::user::service as user;
 use crate::user::service::token::ClaimsResponse;
+use diesel::PgConnection;
 use juniper::Context as JuniperContext;
 use std::sync::Arc;
 
@@ -33,8 +34,11 @@ pub(crate) struct QueryRoot;
 
 #[juniper::object(Context = Context)]
 impl QueryRoot {
-    pub fn users(context: &Context, limit: Option<i32>, offset: Option<i32>) -> ServiceResult<Vec<User>> {
-
+    pub fn users(
+        context: &Context,
+        limit: Option<i32>,
+        offset: Option<i32>,
+    ) -> ServiceResult<Vec<User>> {
         let limit: i32 = limit.unwrap_or(100);
         let offset: i32 = offset.unwrap_or(0);
 
@@ -56,9 +60,11 @@ pub(crate) struct Mutation;
 
 #[juniper::object(Context = Context)]
 impl Mutation {
-    // not really needed, but graphiql bug if this is empty…
-    pub fn nothing(name: String) -> ServiceResult<User> {
-        Err(crate::errors::ServiceError::InternalServerError)
+    pub fn register(context: &Context, data: UserData) -> ServiceResult<SlimUser> {
+        use crate::user::service::register::create_user;
+        let conn: &PgConnection = &context.db;
+
+        Ok(create_user(data, conn)?)
     }
 }
 

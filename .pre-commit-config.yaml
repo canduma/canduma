@@ -1,0 +1,128 @@
+repos:
+  - repo: local
+    hooks:
+      - id: touch_main.rs
+        name: touch to enforce cargo clippy https://github.com/rust-lang/rust-clippy/issues/1495 .
+        language: system
+        entry: sh -c 'touch src/main.rs'
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: 55f347186aec7f2a4ec13c31effdb4b26512f2bc
+    hooks:
+#      - id: fmt
+#        name: rustfmt https://github.com/rust-lang/rustfmt/blob/master/README.md .
+      - id: clippy
+        args: ['']
+        name: cargo clippy https://github.com/rust-lang/rust-clippy/blob/master/README.md .
+      - id: cargo-check
+        name: cargo check https://doc.rust-lang.org/cargo/commands/cargo-check.html .
+#  - repo: https://github.com/pre-commit/pre-commit-hooks
+#    rev: v2.5.0 # Use the ref you want to point at
+#    hooks:
+#      - id: end-of-file-fixer
+#        name: Fix End of Files https://github.com/pre-commit/pre-commit-hooks#end-of-file-fixer .
+#      - id: trailing-whitespace
+#        name: Trim Trailing Whitespace https://github.com/pre-commit/pre-commit-hooks#trailing-whitespace .
+#      - id: check-added-large-files
+#        name: Check large files maxkb=3000  https://github.com/pre-commit/pre-commit-hooks#check-added-large-files .
+#        args: [--maxkb=3000]
+#      - id: check-yaml
+#        name: Check Yaml https://github.com/pre-commit/pre-commit-hooks#check-yaml .
+#      - id: check-case-conflict
+#        name: Check for case conflicts https://github.com/pre-commit/pre-commit-hooks#check-case-conflict .
+#      - id: check-executables-have-shebangs
+#        name: Check that executables have shebangs  https://github.com/pre-commit/pre-commit-hooks#check-executables-have-shebangs .
+#      - id: check-merge-conflict
+#        name: Check for merge conflicts https://github.com/pre-commit/pre-commit-hooks#check-merge-conflict .
+#      #      - id: check-symlinks
+#      #      - id: check-vcs-permalinks
+#      #      - id: detect-private-key
+#      - id: mixed-line-ending
+#        name: Mixed line ending https://github.com/pre-commit/pre-commit-hooks#mixed-line-ending .
+#  #      - id: no-commit-to-branch
+#  #        args: [--branch, master, --branch, dev]
+#  #- repo: https://github.com/pre-commit/mirrors-csslint
+#  #  rev: v1.0.5
+#  #  hooks:
+#  #    - id: csslint
+#  #  - repo: https://github.com/pre-commit/mirrors-scss-lint
+#  #    rev: v0.59.0
+#  #    hooks:
+#  #      - id: scss-lint
+#  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+#    rev: 1.11.2
+#    hooks:
+#      - id: check-mailmap
+#        name: Detect if an email address needs to be added to mailmap https://github.com/jumanjihouse/pre-commit-hooks#check-mailmap .
+#      - id: forbid-binary
+#        name: Forbid binaries https://github.com/jumanjihouse/pre-commit-hooks#forbid-binary .
+#        exclude: ^(.*\.ico)$
+#      - id: git-check # Configure in .gitattributes
+#        name: Check for conflict markers and core.whitespace errors https://github.com/jumanjihouse/pre-commit-hooks#git-check .
+#      - id: markdownlint # Configure in .mdlrc
+#        name: Check markdown files https://github.com/jumanjihouse/pre-commit-hooks#markdownlint .
+#        args: [-r, '~MD013,~MD004']
+#      - id: require-ascii
+#        name: Check file encoding https://github.com/jumanjihouse/pre-commit-hooks#require-ascii .
+#  #      - id: shellcheck
+#  - repo: https://github.com/Lucas-C/pre-commit-hooks-nodejs
+#    rev: v1.1.0
+#    hooks:
+#      #      - id: dockerfile_lint
+#      - id: markdown-toc
+#  #      - id: htmlhint
+#  #        args: [--config, .htmlhintrc]
+#  #      - id: htmllint
+#  #  - repo: https://github.com/Lucas-C/pre-commit-hooks-java
+#  #    rev: 1.3.9
+#  #    hooks:
+#  #      - id: validate-html
+#  #  - repo: https://github.com/jstewmon/check-swagger
+#  #    rev: v0.1.4
+#  #    hooks:
+#  #      - id: check-swagger
+#  #  - repo: https://github.com/lovesegfault/beautysh.git
+#  #    rev: 5.0.2
+#  #    hooks:
+#  #      - id: beautysh
+#  - repo: https://github.com/prettier/prettier.git
+#    rev: 2.0.2
+#    hooks:
+#      - id: prettier
+#        name: prettier https://prettier.io/docs/en/ .
+#        args: [--single-quote] #list of args like '--single-quote', '--jsx-bracket-same-line', '--print-width 120', '--no-bracket-spacing'
+#        exclude: package-lock.json
+#  #  - repo: local
+#  #    hooks:
+#  #      - id: Jenkinsfile-linter
+#  #        name: Check Jenkinsfile following the scripted-pipeline syntax using Jenkins API
+#  #        files: Jenkinsfile
+#  #        language: system
+#  #        entry: sh -c '! curl --silent https://jenkins.blaize.tech/pipeline-model-converter/validate --user olexiy.b@blaize.tech:119e663fc7cf7d6a1cfcccd737dc4cae6e -F "jenkinsfile=<Jenkinsfile" | grep -F "Errors"'
+#  - repo: https://github.com/pre-commit/mirrors-eslint
+#    rev: v7.0.0-alpha.3 # Use the sha / tag you want to point at
+#    hooks:
+#      - id: eslint
+#        name: eslint https://github.com/eslint/eslint .
+#        args:
+#          [
+#            --quiet,
+#            --format,
+#            compact,
+#            --ignore-pattern,
+#            '**/dist/',
+#            --ignore-pattern,
+#            'packages/web/src/modules/forms/react-phone-input-2/',
+#            --ext,
+#            js,
+#            --ext,
+#            jsx,
+#            --ext,
+#            json,
+#            --fix,
+#          ]
+#  #        additional_dependencies:
+#  #          - eslint@4.15.0
+#  #          - eslint-config-google@0.7.1
+#  #          - eslint-loader@1.6.1
+#  #          - eslint-plugin-react@6.10.3
+#  #          - babel-eslint@6.1.2

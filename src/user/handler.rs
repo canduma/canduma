@@ -48,8 +48,9 @@ pub(super) async fn login(
     user::login(&auth_data.email, &auth_data.password, pool).and_then(|res| {
         let user_string =
             serde_json::to_string(&res).map_err(|_| ServiceError::InternalServerError)?;
+        debug!("user_string={}", user_string);
         id.remember(user_string);
-        Ok(HttpResponse::Ok().finish())
+        Ok(HttpResponse::Ok().json(res))
     })
 }
 

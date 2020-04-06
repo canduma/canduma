@@ -24,6 +24,8 @@ uuid = { version = "0.7", features = ["serde", "v4"] }
 chrono = { version = "0.4", features = ["serde"] }
 
 lazy_static = "1"
+log = "0.4.8"
+env_logger ="0.7.1"
 
 serde = "1.0"
 serde_derive = "1.0"

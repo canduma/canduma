@@ -1,0 +1,68 @@
+{
+  "name": "canduma",
+  "private": true,
+  "scripts": {
+    "lint": "nopenv pre-commit run --all-files",
+    "test": "cross-env NODE_ENV=test jest",
+    "testci": "cross-env RUST_LOG=debug DEBUG=canduma:* NODE_ENV=test jest",
+    "install": "npip install"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*": [
+      "nopenv pre-commit run --files"
+    ]
+  },
+  "workspaces": [
+    "postgres/",
+    "web"
+  ],
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "cross-env": "^7.0.2",
+    "debug": "^4.1.1",
+    "dotenv": "^8.2.0",
+    "eslint-config-airbnb": "^18.1.0",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-jest": "^23.8.2",
+    "eslint-plugin-json": "^2.1.1",
+    "eslint-plugin-react": "^7.19.0",
+    "eslint-plugin-react-hooks": "^3.0.0",
+    "http-status-codes": "^1.4.0",
+    "husky": "^3.0.4",
+    "isomorphic-fetch": "^2.2.1",
+    "jasmine-expect": "^4.0.3",
+    "jest": "24.9.0",
+    "jest-environment-node": "^25.2.3",
+    "jest-extended": "^0.11.5",
+    "knex": "^0.20.13",
+    "lerna": "^3.20.2",
+    "lint-staged": "^9.2.3",
+    "nodemon": "^1.19.2",
+    "nopy": "^0.2.7",
+    "pg": "^8.0.0",
+    "pluralize": "^8.0.0",
+    "superagent": "^5.2.2",
+    "supertest": "^4.0.2"
+  },
+  "dependencies": {},
+  "jest": {
+    "setupFilesAfterEnv": [
+      "jasmine-expect",
+      "jest-extended"
+    ],
+    "globalSetup": "./tests/jest.beforeall.js",
+    "globalTeardown": "./tests/jest.afterall.js",
+    "testEnvironment": "./tests/jest.env.js"
+  },
+  "python": {
+    "execPath": "python3",
+    "dependencies": {
+      "pre-commit": ">=2.0"
+    }
+  }
+}
