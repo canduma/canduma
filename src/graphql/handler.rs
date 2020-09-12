@@ -6,10 +6,9 @@ use crate::user::model::LoggedUser;
 use actix_web::{error, web, Error, HttpResponse};
 use juniper::http::playground::playground_source;
 use juniper::http::GraphQLRequest;
-use std::sync::Arc;
 
 pub(super) async fn graphql(
-    st: web::Data<Arc<Schema>>,
+    st: web::Data<Schema>,
     data: web::Json<GraphQLRequest>,
     user: LoggedUser,
     token: DecodedToken,
