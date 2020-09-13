@@ -17,7 +17,7 @@ use actix_identity::{CookieIdentityPolicy, IdentityService};
 use actix_web::{App, HttpServer, web};
 use actix_web::middleware::Logger;
 
-#[actix_rt::main]
+#[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
     env_logger::init();
@@ -31,14 +31,17 @@ async fn main() -> std::io::Result<()> {
     let domain = opt.domain.clone();
     let cookie_secret_key = opt.auth_secret_key.clone();
     let secure_cookie = opt.secure_cookie;
-    let auth_duration = chrono::Duration::hours(i64::from(opt.auth_duration_in_hour));
+    let auth_duration = time::Duration::hours(i64::from(opt.auth_duration_in_hour));
     let port = opt.port;
-    let pool = web::Data::new(database::pool::establish_connection(opt.clone()));
+    let pool = database::pool::establish_connection(opt.clone());
 
     let server = HttpServer::new(move || {
+        // prevents double Arc
+        let schema: web::Data<graphql::model::Schema> = schema.clone().into();
+        
         App::new()
-            .app_data(pool.clone())
-            .data(schema.clone())
+            .data(pool.clone())
+            .app_data(schema)
             .data(opt.clone())
             .wrap(Logger::default())
             .wrap(IdentityService::new(
