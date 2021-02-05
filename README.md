@@ -2,11 +2,11 @@
 [![Status](https://img.shields.io/badge/build-passing-brightgreen)]()
 [![Status](https://img.shields.io/badge/pull--request-open-blue)]()
 
-# Canduma rust authentication server boilerplate
+# Canduma rust Graphql
 
 `A Rust authentication server with GraphQL API, Diesel, PostgreSQL session authentication and JWT`
 
-This repository contains boilerplate rust code for getting a GraphQL prototype with JWT up and running quickly.
+This repository contains a GraphQL server with JWT up and running quickly.
 
 It uses [actix-web](https://actix.rs/), [Juniper](https://graphql-rust.github.io/juniper/current/),
 [Diesel](http://diesel.rs/) and [jsonwebtoken](https://docs.rs/jsonwebtoken)
