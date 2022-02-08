@@ -19,13 +19,13 @@ use actix_web::middleware::Logger;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Gets enviroment variables from `.env.example`
+    // Gets environment variables from `.env.example`
     dotenv::dotenv().ok();
 
     // Initiates error logger
     env_logger::init();
 
-    // Sets options to enviroment variables
+    // Sets options to environment variables
     let opt = {
         use structopt::StructOpt;
         cli_args::Opt::from_args()
@@ -35,7 +35,7 @@ async fn main() -> std::io::Result<()> {
     let pool = database::pool::establish_connection(opt.clone());
     let schema = std::sync::Arc::new(crate::graphql::model::create_schema());
 
-    // Authorisation
+    // authorization
     let domain = opt.domain.clone();
     let cookie_secret_key = opt.auth_secret_key.clone();
     let secure_cookie = opt.secure_cookie;
@@ -57,7 +57,7 @@ async fn main() -> std::io::Result<()> {
             .data(opt.clone())
             // Error logging
             .wrap(Logger::default())
-            // Authorisation
+            // authorization
             .wrap(IdentityService::new(
                 CookieIdentityPolicy::new(cookie_secret_key.as_bytes())
                     .name("auth")
