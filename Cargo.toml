@@ -17,7 +17,7 @@ futures = "0.3.5"
 diesel = { version = "1.4.7", features = ["postgres", "uuidv07", "chrono", "r2d2"] }
 r2d2 = "0.8"
 
-juniper = "0.14"
+juniper = "0.15"
 
 uuid = { version = "=0.7", features = ["serde", "v4"] }
 time = "0.2"
