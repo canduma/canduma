@@ -39,7 +39,7 @@
     "jest": "24.9.0",
     "jest-environment-node": "^25.2.3",
     "jest-extended": "^0.11.5",
-    "knex": "^0.20.13",
+    "knex": "^2.4.0",
     "lerna": "^3.20.2",
     "lint-staged": "^9.2.3",
     "nodemon": "^1.19.2",
